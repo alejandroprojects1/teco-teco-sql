@@ -31,10 +31,9 @@ $('nome').value = jogador.nome;
 if (!CONFIG.turmas.includes(jogador.turma)) jogador.turma = '';
 
 if (CONFIG.turmas.length === 1) {
-  // Só uma turma: já vem escolhida, sem precisar tocar
+  // Só uma turma: o campo nem aparece, a turma é preenchida sozinha
   jogador.turma = CONFIG.turmas[0];
-  $('turmas').classList.add('turma-unica');
-  $('turmas').innerHTML = `<span class="turma ativa">${CONFIG.turmas[0]}</span>`;
+  $('turmas').closest('.campo').hidden = true;
 } else {
   $('turmas').innerHTML = CONFIG.turmas.map((t) => `
   <button type="button" class="turma${t === jogador.turma ? ' ativa' : ''}" role="radio" aria-checked="${t === jogador.turma}" data-turma="${t}">${t}</button>`).join('');

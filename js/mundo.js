@@ -454,7 +454,7 @@ export class Mundo {
       const raio = retrato ? (9.5 / Math.max(this.aspecto, 0.45)) * (baixa ? 0.72 : 0.62) : 8.5;
       const a = t * 0.22 + 0.6;
       this._camera(dt, new THREE.Vector3(Math.sin(a) * raio, Y_CENTRO + 2.2, Math.cos(a) * raio),
-        new THREE.Vector3(0, Y_CENTRO - (retrato ? (baixa ? 3.6 : 1.9) : 0.6), 0), 2.5);
+        new THREE.Vector3(0, Y_CENTRO - (retrato ? (baixa ? 2.6 : 0.9) : 0.6), 0), 2.5);
     } else if (this.modo === 'jogo' && emMovimento) {
       this.tempoVoo += dt;
       const prog = Math.min(1, this.tempoVoo / 110);

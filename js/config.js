@@ -1,7 +1,7 @@
 // Configurações do jogo. Ajuste à vontade.
 export const CONFIG = {
   // Turmas que aparecem para o aluno escolher.
-  // Com uma turma só, ela já vem escolhida automaticamente.
+  // Com uma turma só, o campo de turma não aparece (ela é preenchida sozinha).
   // Para várias, use por exemplo: ['7º A', '7º B', '7º C']
   turmas: ['7º ano Vespertino'],
 
