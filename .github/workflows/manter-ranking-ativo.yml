@@ -1,0 +1,26 @@
+# O Supabase gratuito pausa o projeto depois de 7 dias sem uso.
+# Este robô consulta o ranking duas vezes por semana para mantê-lo ativo
+# (inclusive nas férias). Lê a URL e a chave pública de js/config.js.
+name: Manter ranking ativo
+
+on:
+  schedule:
+    - cron: '17 12 * * 1,4'   # segundas e quintas, 9h17 (horário de Brasília)
+  workflow_dispatch:
+
+jobs:
+  cutucar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Consultar o ranking
+        run: |
+          URL=$(grep -oP "url:\s*'\K[^']*" js/config.js | head -1)
+          CHAVE=$(grep -oP "chave:\s*'\K[^']*" js/config.js | head -1)
+          if [ -z "$URL" ] || [ -z "$CHAVE" ]; then
+            echo "Ranking ainda não configurado em js/config.js. Nada a fazer."
+            exit 0
+          fi
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL/rest/v1/ranking?select=nome&limit=1" -H "apikey: $CHAVE")
+          echo "Resposta do Supabase: $STATUS"
+          test "$STATUS" = "200"

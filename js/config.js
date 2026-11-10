@@ -1,5 +1,15 @@
 // Configurações do jogo. Ajuste à vontade.
 export const CONFIG = {
+  // Ranking online (Supabase). Veja o passo a passo no README.
+  // Em Supabase → Project Settings → API (ou Data API / API Keys), copie:
+  //   url:   o "Project URL" (ex.: https://abcdefgh.supabase.co)
+  //   chave: a chave pública "anon" / "publishable" (NUNCA a "service_role" / "secret")
+  // Enquanto estiver vazio, o jogo funciona normalmente, só sem ranking.
+  ranking: {
+    url: '',
+    chave: '',
+  },
+
   // Turmas que aparecem para o aluno escolher.
   // Com uma turma só, o campo de turma não aparece (ela é preenchida sozinha).
   // Para várias, use por exemplo: ['7º A', '7º B', '7º C']

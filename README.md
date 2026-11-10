@@ -36,6 +36,33 @@ Cada partida tem **15 perguntas**: 3 de cada tema, na ordem abaixo, sorteadas de
 
 Tipos de pergunta: **verdadeiro ou falso**, **múltipla escolha** e **montar o comando** (tocando nas peças na ordem certa).
 
+## Ranking e área do professor
+
+- No fim de cada partida, a pontuação vai para o **ranking online**. O ranking mostra a **melhor** pontuação de cada aluno, com pódio e posição.
+- Sem internet, a pontuação fica guardada no celular e é enviada depois.
+- Nomes impróprios são bloqueados (`js/filtro.js`), e o professor pode corrigir qualquer nome.
+- **Área do professor** (`professor.html`, com link no fim da tela do ranking): entrar com e-mail e senha, **renomear** ou **apagar** aluno, **zerar o ranking** e **baixar a planilha** (CSV para Excel ou Google Planilhas).
+
+### Configurar o ranking (Supabase, gratuito)
+
+1. Crie uma conta em [supabase.com](https://supabase.com) e clique em **New project**. Escolha um nome (ex.: `teco-teco-sql`), uma senha para o banco (guarde-a) e a região **South America (São Paulo)**.
+2. No menu lateral, abra **SQL Editor**, cole todo o conteúdo de [`supabase/configurar.sql`](supabase/configurar.sql), **troque `SEU-EMAIL@exemplo.com` pelo e-mail do professor** (última linha) e clique em **Run**.
+3. Abra **Authentication → Users → Add user → Create new user**: use o **mesmo e-mail** do passo 2, crie uma senha e marque **Auto Confirm User**.
+4. Em **Authentication → Sign In / Providers**, desligue **Allow new users to sign up** (assim ninguém cria outra conta).
+5. Em **Project Settings → API** (ou **Data API** e **API Keys**), copie o **Project URL** e a chave pública **anon** / **publishable**.
+6. Cole os dois em `js/config.js`, no bloco `ranking`:
+   ```js
+   ranking: {
+     url: 'https://abcdefgh.supabase.co',
+     chave: 'eyJhbGciOi...',
+   },
+   ```
+   ⚠️ Use só a chave pública (**anon** / **publishable**). **Nunca** coloque a chave **service_role** / **secret** no site.
+
+A chave pública pode ficar no código: ela só permite o que o `configurar.sql` libera (ver o ranking e enviar pontuações). Editar, apagar e zerar exigem o login do professor.
+
+O Supabase gratuito **pausa o projeto depois de 7 dias sem uso**. O robô em `.github/workflows/manter-ranking-ativo.yml` consulta o ranking duas vezes por semana para evitar isso. Se mesmo assim pausar, entre no painel do Supabase e clique em **Restore project**: os dados não se perdem.
+
 ## Publicar no GitHub Pages
 
 1. No repositório, abra **Settings → Pages**.
@@ -61,6 +88,7 @@ Depois acesse `http://localhost:8000`.
 |---|---|
 | `js/perguntas.js` | Adicionar, editar ou remover perguntas (há instruções no topo do arquivo) |
 | `js/config.js` | Turma, número de vidas, tempo de cada pergunta, pontuação, combo e modo treino |
+| `js/filtro.js` | Lista de palavras bloqueadas nos nomes |
 | `js/tabela.js` | Os dados das tabelas de exemplo (`alunos`, `pets`, `livros`) usadas para mostrar os resultados |
 
 ## Estrutura
@@ -75,6 +103,11 @@ js/quiz.js          Painel de perguntas
 js/tabela.js        Executa o SQL (SQLite no navegador) e desenha a tabela
 js/perguntas.js     Banco de perguntas
 js/audio.js         Efeitos sonoros (gerados no navegador)
+js/ranking.js       Comunicação com o Supabase (ranking e login)
+js/professor.js     Área do professor
+js/filtro.js        Filtro de nomes impróprios
+professor.html      Página da área do professor
+supabase/           Script do banco de dados do ranking
 js/config.js        Configurações
 vendor/             Three.js (3D) e sql.js (SQLite no navegador), ambos MIT
 assets/             Ícones
@@ -84,7 +117,7 @@ assets/             Ícones
 
 - [x] **Etapa 1**: jogo completo no celular (avião, obstáculos, vidas, perguntas, tempo, combo e resultado)
 - [x] **Etapa 2**: modo treino (escolher o tema) e tabela mostrando o resultado de cada comando
-- [ ] **Etapa 3**: ranking online por turma e área do professor (editar nomes e zerar o ranking)
+- [x] **Etapa 3**: ranking online e área do professor (renomear, apagar, zerar e baixar planilha)
 
 ## Créditos
 

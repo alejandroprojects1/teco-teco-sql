@@ -4,6 +4,8 @@ import { CONFIG } from './config.js';
 import { TEMAS, PERGUNTAS } from './perguntas.js';
 import { perguntar, mostrarRetorno, fecharPergunta, embaralhar } from './quiz.js';
 import { prepararSQL } from './tabela.js';
+import { rankingAtivo, enviarPontuacao, buscarRanking, guardarPendente, enviarPendentes } from './ranking.js';
+import { nomeImproprio } from './filtro.js';
 import { som, iniciarAudio, alternarSom, estaMudo, motorLigado, motorVelocidade, vibrar } from './audio.js';
 
 const $ = (id) => document.getElementById(id);
@@ -59,6 +61,13 @@ $('form-inicio').addEventListener('submit', (ev) => {
   const erro = $('erro-inicio');
   if (nome.length < 2) {
     erro.textContent = 'Digite seu nome (pelo menos 2 letras).';
+    erro.hidden = false;
+    $('nome').focus();
+    som.erro();
+    return;
+  }
+  if (nomeImproprio(nome)) {
+    erro.textContent = 'Esse nome não pode ser usado. Escreva seu nome de verdade, por favor.';
     erro.hidden = false;
     $('nome').focus();
     som.erro();
@@ -391,7 +400,107 @@ function finalizar(completou) {
   mostrarTela('tela-resultado');
   if (taxa >= 0.65) { som.vitoria(); confete(); } else som.fim();
   animarNumero($('res-pontos'), total);
+
+  salvarNoRanking({
+    nome: jogador.nome,
+    turma: jogador.turma,
+    pontos: Math.min(total, 10000),
+    acertos: Math.min(estado.acertos, 15),
+    maior_combo: Math.min(estado.maiorCombo, 15),
+    distancia: Math.min(Math.round(mundo.distancia), 100000),
+  });
 }
+
+// ───────────── Ranking online ─────────────
+const mesmoNome = (a, b) => a.trim().toLowerCase() === b.trim().toLowerCase();
+
+async function salvarNoRanking(partida) {
+  const el = $('res-ranking');
+  $('btn-ver-ranking').hidden = !rankingAtivo();
+  if (!rankingAtivo()) { el.innerHTML = ''; return; }
+  el.className = 'res-ranking carregando';
+  el.innerHTML = '<span class="mini-girando"></span> Enviando para o ranking…';
+  try {
+    await enviarPontuacao(partida);
+  } catch (e) {
+    if (!e.status || e.status >= 500) {
+      guardarPendente(partida);
+      el.className = 'res-ranking aviso';
+      el.textContent = '📶 Sem internet agora: sua pontuação será enviada quando você voltar a jogar.';
+    } else {
+      el.className = 'res-ranking aviso';
+      el.textContent = `Não foi possível enviar: ${e.message}`;
+    }
+    return;
+  }
+  try {
+    const lista = await buscarRanking(100);
+    const pos = lista.findIndex((l) => mesmoNome(l.nome, partida.nome)) + 1;
+    const melhor = lista[pos - 1];
+    el.className = 'res-ranking ok';
+    if (!pos) el.innerHTML = '✅ Pontuação enviada para o ranking!';
+    else if (melhor.pontos > partida.pontos) el.innerHTML = `✅ Enviada! Seu recorde de <b>${melhor.pontos}</b> pontos está em <b>${pos}º lugar</b>.`;
+    else el.innerHTML = `${pos <= 3 ? ['🥇', '🥈', '🥉'][pos - 1] : '🏆'} Você está em <b>${pos}º lugar</b> no ranking!`;
+  } catch {
+    el.className = 'res-ranking ok';
+    el.innerHTML = '✅ Pontuação enviada para o ranking!';
+  }
+}
+
+let origemRanking = 'tela-inicio';
+async function abrirRanking(origem) {
+  origemRanking = origem;
+  mostrarTela('tela-ranking');
+  $('ranking-turma').textContent = CONFIG.turmas.length === 1 ? CONFIG.turmas[0] : 'Todas as turmas';
+  const area = $('ranking-conteudo');
+  if (!rankingAtivo()) {
+    area.innerHTML = '<div class="ranking-vazio"><span>🛠️</span><p>O ranking online ainda não foi configurado pelo professor.</p></div>';
+    return;
+  }
+  area.innerHTML = '<div class="ranking-vazio"><span class="mini-girando grande"></span><p>Carregando o ranking…</p></div>';
+  try {
+    await enviarPendentes();
+    const lista = await buscarRanking(50);
+    if (!lista.length) {
+      area.innerHTML = '<div class="ranking-vazio"><span>✈️</span><p>Ninguém jogou ainda.<br>Seja o primeiro piloto do ranking!</p></div>';
+      return;
+    }
+    area.innerHTML = desenharRanking(lista);
+  } catch (e) {
+    area.innerHTML = `<div class="ranking-vazio"><span>📶</span><p>Não foi possível carregar o ranking.<br><small>${esc(e.message)}</small></p>
+      <button class="btn btn-secundario" id="btn-tentar-ranking">Tentar de novo</button></div>`;
+    $('btn-tentar-ranking').addEventListener('click', () => abrirRanking(origemRanking));
+  }
+}
+
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+function desenharRanking(lista) {
+  const eu = (l) => jogador.nome && mesmoNome(l.nome, jogador.nome);
+  const podio = lista.slice(0, 3);
+  const ordemPodio = [1, 0, 2].filter((i) => podio[i]);
+  const medalhas = ['🥇', '🥈', '🥉'];
+  const htmlPodio = `<div class="podio">${ordemPodio.map((i) => `
+      <div class="podio-lugar lugar-${i + 1}${eu(podio[i]) ? ' eu' : ''}">
+        <span class="podio-medalha">${medalhas[i]}</span>
+        <span class="podio-nome">${esc(podio[i].nome)}</span>
+        <span class="podio-pontos">${podio[i].pontos}</span>
+        <div class="podio-bloco">${i + 1}º</div>
+      </div>`).join('')}</div>`;
+  const resto = lista.slice(3).map((l, i) => `
+      <li class="${eu(l) ? 'eu' : ''}">
+        <span class="pos">${i + 4}º</span>
+        <span class="nome">${esc(l.nome)}${eu(l) ? ' <em>você</em>' : ''}</span>
+        <span class="acertos" title="acertos">✓ ${l.acertos}</span>
+        <span class="pts">${l.pontos}</span>
+      </li>`).join('');
+  return htmlPodio + (resto ? `<ol class="lista-ranking">${resto}</ol>` : '');
+}
+
+$('btn-ranking').addEventListener('click', () => { iniciarAudio(); som.clique(); abrirRanking('tela-inicio'); });
+$('btn-ver-ranking').addEventListener('click', () => { som.clique(); abrirRanking('tela-resultado'); });
+$('btn-voltar-ranking').addEventListener('click', () => { som.clique(); mostrarTela(origemRanking); });
+$('btn-atualizar-ranking').addEventListener('click', () => { som.clique(); abrirRanking(origemRanking); });
 
 function finalizarTreino() {
   fase = 'fim';
@@ -520,3 +629,5 @@ mostrarTela('tela-inicio');
 requestAnimationFrame(quadro);
 // Deixa o SQLite pronto para mostrar as tabelas depois das respostas
 setTimeout(() => prepararSQL().catch(() => {}), 1500);
+// Envia pontuações que ficaram guardadas sem internet
+setTimeout(() => enviarPendentes().catch(() => {}), 2500);

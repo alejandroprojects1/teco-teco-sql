@@ -717,3 +717,77 @@ code {
 .demo-tabela tr.vazia td { text-align: center; color: var(--tinta-2); font-family: var(--fonte); font-style: italic; padding: 12px; }
 .demo-legenda { margin: 0; font-size: 15px; line-height: 1.4; color: var(--tinta); }
 .demo-legenda code { white-space: nowrap; }
+
+/* ───────────── Etapa 3: ranking ───────────── */
+.linha-botoes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.linha-botoes .btn { width: 100%; padding-left: 10px; padding-right: 10px; }
+
+.tela-ranking { justify-content: flex-start; }
+.cartao-ranking {
+  width: 100%; max-width: 480px;
+  padding: 18px 16px 14px;
+  margin: auto 0;
+  display: flex; flex-direction: column;
+  animation: subir 0.5s cubic-bezier(.2,.8,.2,1) both;
+}
+.cartao-ranking .treino-topo { align-items: center; }
+.ranking-titulo { flex: 1; text-align: center; }
+.ranking-titulo h2 { margin: 0; font-size: 28px; }
+.ranking-titulo p { margin: 0; color: var(--tinta-2); font-size: 15px; font-weight: 500; }
+.ranking-conteudo { min-height: 220px; }
+.ranking-vazio { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; padding: 36px 12px; color: var(--tinta-2); font-size: 17px; }
+.ranking-vazio > span { font-size: 44px; }
+.ranking-vazio p { margin: 0; line-height: 1.4; }
+.ranking-vazio small { font-size: 13px; opacity: 0.8; }
+
+.mini-girando {
+  display: inline-block; vertical-align: -3px;
+  width: 16px; height: 16px; border-radius: 50%;
+  border: 3px solid #ecd9c2; border-top-color: var(--vermelho);
+  animation: girar 0.7s linear infinite;
+}
+.mini-girando.grande { width: 38px; height: 38px; border-width: 4px; }
+
+.podio { display: grid; grid-template-columns: 1fr 1fr 1fr; align-items: end; gap: 8px; margin: 6px 0 14px; }
+.podio-lugar { display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 0; animation: subir 0.5s both; }
+.podio-lugar.lugar-1 { animation-delay: 0.15s; }
+.podio-lugar.lugar-2 { animation-delay: 0.05s; }
+.podio-lugar.lugar-3 { animation-delay: 0.25s; }
+.podio-medalha { font-size: 34px; line-height: 1; }
+.lugar-1 .podio-medalha { font-size: 44px; }
+.podio-nome { font-weight: 700; font-size: 15.5px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.podio-pontos { font-weight: 700; color: var(--vermelho); font-size: 18px; font-variant-numeric: tabular-nums; }
+.podio-bloco {
+  width: 100%;
+  border-radius: 14px 14px 6px 6px;
+  display: grid; place-items: center;
+  font-weight: 700; font-size: 22px; color: #fff;
+  margin-top: 4px;
+}
+.lugar-1 .podio-bloco { height: 92px; background: linear-gradient(180deg, #ffd43b, #f59f00); box-shadow: 0 5px 0 #c27b00; }
+.lugar-2 .podio-bloco { height: 70px; background: linear-gradient(180deg, #ced4da, #98a2ad); box-shadow: 0 5px 0 #77818c; }
+.lugar-3 .podio-bloco { height: 54px; background: linear-gradient(180deg, #f0a46b, #c97538); box-shadow: 0 5px 0 #9b5826; }
+.podio-lugar.eu .podio-nome { color: var(--vermelho-escuro); }
+
+.lista-ranking { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.lista-ranking li {
+  display: grid; grid-template-columns: 38px 1fr auto auto; align-items: center; gap: 8px;
+  background: #fff;
+  border-radius: 14px;
+  padding: 9px 12px;
+  box-shadow: inset 0 0 0 2px #f1e3d1;
+  animation: aparecer 0.35s both;
+}
+.lista-ranking .pos { font-weight: 700; color: var(--tinta-2); }
+.lista-ranking .nome { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lista-ranking .nome em { font-style: normal; font-size: 12px; font-weight: 700; color: #fff; background: var(--vermelho); padding: 2px 7px; border-radius: 99px; margin-left: 4px; }
+.lista-ranking .acertos { font-size: 13px; color: var(--verde); font-weight: 600; }
+.lista-ranking .pts { font-weight: 700; font-variant-numeric: tabular-nums; min-width: 44px; text-align: right; }
+.lista-ranking li.eu { box-shadow: inset 0 0 0 2px var(--vermelho); background: #fff3ef; }
+.link-professor { align-self: center; margin-top: 14px; font-size: 13px; color: var(--tinta-2); opacity: 0.75; }
+
+.res-ranking { margin: 6px 0 10px; font-size: 15.5px; line-height: 1.4; padding: 10px 12px; border-radius: 14px; width: 100%; }
+.res-ranking:empty { display: none; }
+.res-ranking.carregando { color: var(--tinta-2); background: var(--creme-2); }
+.res-ranking.ok { background: #fff4d6; color: var(--tinta); box-shadow: inset 0 0 0 2px #ffd36b; }
+.res-ranking.aviso { background: var(--creme-2); color: var(--tinta-2); }

@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f7c99b">
+  <meta name="robots" content="noindex">
+  <title>Área do professor · Teco-Teco SQL</title>
+  <link rel="icon" href="assets/icone.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/estilo.css">
+  <link rel="stylesheet" href="css/professor.css">
+</head>
+<body class="pagina-professor">
+  <main class="prof">
+    <header class="prof-cabecalho">
+      <a href="./" class="prof-voltar" aria-label="Voltar ao jogo">
+        <img src="assets/icone.svg" alt="" width="44" height="44">
+      </a>
+      <div>
+        <h1>Área do professor</h1>
+        <p>Teco-Teco SQL · ranking da turma</p>
+      </div>
+      <button id="btn-sair" class="btn btn-secundario btn-pequeno" hidden>Sair</button>
+    </header>
+
+    <!-- Aviso: ranking não configurado -->
+    <section id="sem-config" class="cartao prof-cartao" hidden>
+      <h2>Ranking ainda não configurado</h2>
+      <p>Preencha <code>url</code> e <code>chave</code> em <code>js/config.js</code>, seguindo o passo a passo do README.</p>
+    </section>
+
+    <!-- Login -->
+    <form id="form-login" class="cartao prof-cartao prof-login" hidden novalidate>
+      <h2>Entrar</h2>
+      <p>Use o e-mail e a senha cadastrados no Supabase.</p>
+      <label class="campo">
+        <span class="campo-rotulo">E-mail</span>
+        <input id="email" type="email" autocomplete="username" required>
+      </label>
+      <label class="campo">
+        <span class="campo-rotulo">Senha</span>
+        <input id="senha" type="password" autocomplete="current-password" required>
+      </label>
+      <p id="erro-login" class="erro" role="alert" hidden></p>
+      <button type="submit" class="btn btn-principal btn-grande" id="btn-entrar">Entrar</button>
+    </form>
+
+    <!-- Painel -->
+    <section id="painel" hidden>
+      <div class="prof-numeros">
+        <div class="cartao"><strong id="n-jogadores">0</strong><span>alunos</span></div>
+        <div class="cartao"><strong id="n-partidas">0</strong><span>partidas</span></div>
+        <div class="cartao"><strong id="n-media">0</strong><span>média de acertos</span></div>
+      </div>
+
+      <div class="cartao prof-cartao">
+        <div class="prof-ferramentas">
+          <input id="busca" type="search" placeholder="Buscar aluno…" aria-label="Buscar aluno">
+          <button id="btn-atualizar" class="btn btn-secundario btn-pequeno">↻ Atualizar</button>
+          <button id="btn-csv" class="btn btn-secundario btn-pequeno">⬇ Planilha</button>
+          <button id="btn-zerar" class="btn btn-perigo btn-pequeno">Zerar ranking</button>
+        </div>
+        <p class="prof-dica">O ranking mostra a <b>melhor</b> pontuação de cada aluno. Renomear ou apagar vale para todas as partidas daquele nome.</p>
+        <div id="lista-jogadores" class="lista-jogadores" aria-live="polite"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Janela de confirmação / edição -->
+  <div id="janela" class="sobreposicao" hidden>
+    <div class="cartao cartao-modal prof-janela" role="dialog" aria-modal="true" aria-labelledby="janela-titulo">
+      <h2 id="janela-titulo"></h2>
+      <div id="janela-corpo"></div>
+      <p id="janela-erro" class="erro" role="alert" hidden></p>
+      <div class="prof-janela-botoes">
+        <button id="janela-cancelar" class="btn btn-secundario">Cancelar</button>
+        <button id="janela-ok" class="btn btn-principal">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="aviso" class="prof-aviso" role="status" hidden></div>
+
+  <script type="module" src="js/professor.js"></script>
+</body>
+</html>

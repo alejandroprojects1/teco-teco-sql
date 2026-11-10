@@ -50,13 +50,38 @@
         Decolar
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.6 10.6L20.4 3.3c.6-.2 1.1.3.9.9l-7.3 17.8c-.3.7-1.3.6-1.5-.1l-1.9-6.6-6.6-1.9c-.7-.2-.8-1.2-.1-1.5z" fill="currentColor"/><path d="M10.6 13.4l5-5" stroke="#fff" stroke-opacity=".5" stroke-width="1.6" stroke-linecap="round"/></svg>
       </button>
-      <button type="button" id="btn-treino" class="btn btn-secundario btn-treino">
-        <span aria-hidden="true">📚</span> Modo treino
-      </button>
+      <div class="linha-botoes">
+        <button type="button" id="btn-treino" class="btn btn-secundario btn-treino">
+          <span aria-hidden="true">📚</span> Treino
+        </button>
+        <button type="button" id="btn-ranking" class="btn btn-secundario btn-ranking">
+          <span aria-hidden="true">🏆</span> Ranking
+        </button>
+      </div>
       <div class="linha-sec">
         <button type="button" id="btn-como" class="btn-link">Como jogar</button>
       </div>
     </form>
+  </section>
+
+  <!-- Ranking -->
+  <section id="tela-ranking" class="tela tela-ranking" aria-label="Ranking">
+    <div class="cartao cartao-ranking">
+      <div class="treino-topo">
+        <button id="btn-voltar-ranking" class="btn-redondo btn-voltar" aria-label="Voltar">
+          <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="ranking-titulo">
+          <h2>Ranking</h2>
+          <p id="ranking-turma"></p>
+        </div>
+        <button id="btn-atualizar-ranking" class="btn-redondo btn-voltar" aria-label="Atualizar">
+          <svg viewBox="0 0 24 24"><path d="M19.5 12a7.5 7.5 0 11-2.2-5.3M19.5 4.5v4h-4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+      <div id="ranking-conteudo" class="ranking-conteudo" aria-live="polite"></div>
+      <a href="professor.html" class="link-professor">Área do professor</a>
+    </div>
   </section>
 
   <!-- Modo treino: escolher tema -->
@@ -170,10 +195,13 @@
         <div><strong id="res-distancia">0 m</strong><span>voados</span></div>
       </div>
       <div id="res-temas" class="res-temas"></div>
-      <p class="res-aviso">🏆 O ranking online da turma chega na próxima etapa!</p>
+      <p id="res-ranking" class="res-ranking" aria-live="polite"></p>
       <div class="res-botoes">
         <button id="btn-de-novo" class="btn btn-principal btn-grande">Jogar de novo</button>
-        <button id="btn-inicio" class="btn btn-secundario">Início</button>
+        <div class="linha-botoes">
+          <button id="btn-ver-ranking" class="btn btn-secundario">🏆 Ranking</button>
+          <button id="btn-inicio" class="btn btn-secundario">Início</button>
+        </div>
       </div>
     </div>
   </section>
