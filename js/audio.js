@@ -85,38 +85,108 @@ export const som = {
   vitoria: () => [523, 659, 784, 1047, 1319].forEach((f, i) => tom(f, 0.3, { tipo: 'triangle', vol: 0.15, atraso: i * 0.09 })),
 };
 
-// Ronco suave do motor durante o voo
+// ───────────── Barulho do avião (motor + hélice + vento) ─────────────
+// Volume do motor em relação aos outros sons (0 a 1)
+const VOLUME_MOTOR = 0.42;
+
+let ruidoBuffer = null;
+function bufferDeRuido() {
+  if (!ruidoBuffer) {
+    const n = ctx.sampleRate * 2;
+    ruidoBuffer = ctx.createBuffer(1, n, ctx.sampleRate);
+    const d = ruidoBuffer.getChannelData(0);
+    for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+  }
+  return ruidoBuffer;
+}
+
+function criarMotor() {
+  const agora = ctx.currentTime;
+  const fontes = [];
+  const osc = (tipo, freq) => {
+    const o = ctx.createOscillator();
+    o.type = tipo;
+    o.frequency.value = freq;
+    fontes.push(o);
+    return o;
+  };
+  const ganho = (v) => { const g = ctx.createGain(); g.gain.value = v; return g; };
+  const filtro = (tipo, freq, q = 0.8) => {
+    const f = ctx.createBiquadFilter();
+    f.type = tipo;
+    f.frequency.value = freq;
+    f.Q.value = q;
+    return f;
+  };
+
+  // Saída geral (liga e desliga suave)
+  const saida = ganho(0);
+  saida.connect(mestre);
+  saida.gain.setTargetAtTime(VOLUME_MOTOR, agora, 0.35);
+
+  // "Tuc-tuc" da hélice: um pulso rápido que modula o volume do motor
+  const pulso = ganho(0.6);
+  pulso.connect(saida);
+  const helice = osc('sine', 26);
+  const heliceForca = ganho(0.4);
+  helice.connect(heliceForca).connect(pulso.gain);
+
+  // Ronco do motor: dente de serra + oitava abaixo, filtrados
+  const ronco = osc('sawtooth', 100);
+  const sub = osc('square', 50);
+  const filtroRonco = filtro('lowpass', 1000, 1.4);
+  ronco.connect(ganho(0.55)).connect(filtroRonco);
+  sub.connect(ganho(0.3)).connect(filtroRonco);
+  filtroRonco.connect(pulso);
+
+  // Leve oscilação do motor, para não soar "de máquina"
+  const oscila = osc('sine', 0.6);
+  const oscilaForca = ganho(12); // em cents
+  oscila.connect(oscilaForca);
+  oscilaForca.connect(ronco.detune);
+  oscilaForca.connect(sub.detune);
+
+  // Ar cortado pela hélice (ruído que também pulsa)
+  const ar = ctx.createBufferSource();
+  ar.buffer = bufferDeRuido();
+  ar.loop = true;
+  fontes.push(ar);
+  const filtroAr = filtro('bandpass', 900, 0.7);
+  ar.connect(filtroAr).connect(ganho(0.5)).connect(pulso);
+
+  // Vento constante, bem baixinho
+  const vento = ctx.createBufferSource();
+  vento.buffer = bufferDeRuido();
+  vento.loop = true;
+  vento.playbackRate.value = 0.7;
+  fontes.push(vento);
+  vento.connect(filtro('lowpass', 450)).connect(ganho(0.25)).connect(saida);
+
+  fontes.forEach((f) => f.start(agora));
+  return { saida, fontes, ronco, sub, helice, filtroAr };
+}
+
 export function motorLigado(ligado) {
   if (!ctx) return;
   if (ligado && !motor) {
-    const osc = ctx.createOscillator();
-    osc.type = 'sawtooth';
-    osc.frequency.value = 62;
-    const lfo = ctx.createOscillator();
-    lfo.frequency.value = 14;
-    const lfoG = ctx.createGain();
-    lfoG.gain.value = 0.006;
-    const filtro = ctx.createBiquadFilter();
-    filtro.type = 'lowpass';
-    filtro.frequency.value = 260;
-    const g = ctx.createGain();
-    g.gain.value = 0;
-    g.gain.setTargetAtTime(0.022, ctx.currentTime, 0.3);
-    lfo.connect(lfoG).connect(g.gain);
-    osc.connect(filtro).connect(g).connect(mestre);
-    osc.start();
-    lfo.start();
-    motor = { osc, lfo, g };
+    motor = criarMotor();
   } else if (!ligado && motor) {
     const m = motor;
     motor = null;
-    m.g.gain.setTargetAtTime(0, ctx.currentTime, 0.15);
-    setTimeout(() => { m.osc.stop(); m.lfo.stop(); }, 600);
+    m.saida.gain.cancelScheduledValues(ctx.currentTime);
+    m.saida.gain.setTargetAtTime(0, ctx.currentTime, 0.12);
+    setTimeout(() => m.fontes.forEach((f) => { try { f.stop(); } catch { /* já parou */ } }), 700);
   }
 }
 
+// Quanto mais rápido o avião, mais agudo o motor e mais rápida a hélice
 export function motorVelocidade(v) {
-  if (motor) motor.osc.frequency.setTargetAtTime(52 + v * 1.1, ctx.currentTime, 0.2);
+  if (!motor) return;
+  const t = ctx.currentTime;
+  motor.ronco.frequency.setTargetAtTime(78 + v * 1.25, t, 0.3);
+  motor.sub.frequency.setTargetAtTime((78 + v * 1.25) / 2, t, 0.3);
+  motor.helice.frequency.setTargetAtTime(18 + v * 0.45, t, 0.3);
+  motor.filtroAr.frequency.setTargetAtTime(600 + v * 16, t, 0.3);
 }
 
 export function vibrar(padrao) {
