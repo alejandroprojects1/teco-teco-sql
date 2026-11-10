@@ -599,3 +599,5 @@ code {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
 .tela-resultado { padding-top: calc(70px + var(--topo-seguro)); }
+.turmas.turma-unica { display: flex; }
+.turma-unica .turma { padding: 11px 18px; cursor: default; transform: none; }

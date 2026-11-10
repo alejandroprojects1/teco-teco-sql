@@ -27,8 +27,18 @@ let estado = null;
 const jogador = armazenamento.ler('teco:jogador', { nome: '', turma: '' });
 $('nome').value = jogador.nome;
 
-$('turmas').innerHTML = CONFIG.turmas.map((t) => `
+// Turma salva que não existe mais na lista é descartada
+if (!CONFIG.turmas.includes(jogador.turma)) jogador.turma = '';
+
+if (CONFIG.turmas.length === 1) {
+  // Só uma turma: já vem escolhida, sem precisar tocar
+  jogador.turma = CONFIG.turmas[0];
+  $('turmas').classList.add('turma-unica');
+  $('turmas').innerHTML = `<span class="turma ativa">${CONFIG.turmas[0]}</span>`;
+} else {
+  $('turmas').innerHTML = CONFIG.turmas.map((t) => `
   <button type="button" class="turma${t === jogador.turma ? ' ativa' : ''}" role="radio" aria-checked="${t === jogador.turma}" data-turma="${t}">${t}</button>`).join('');
+}
 $('turmas').addEventListener('click', (ev) => {
   const b = ev.target.closest('.turma');
   if (!b) return;

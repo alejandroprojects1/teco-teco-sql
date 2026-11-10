@@ -1,7 +1,9 @@
 // Configurações do jogo. Ajuste à vontade.
 export const CONFIG = {
-  // Turmas que aparecem para o aluno escolher
-  turmas: ['7º A', '7º B', '7º C', '7º D'],
+  // Turmas que aparecem para o aluno escolher.
+  // Com uma turma só, ela já vem escolhida automaticamente.
+  // Para várias, use por exemplo: ['7º A', '7º B', '7º C']
+  turmas: ['7º ano Vespertino'],
 
   vidas: 5,
   perguntasPorTema: 3, // 5 temas × 3 = 15 perguntas por partida
