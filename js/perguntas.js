@@ -13,6 +13,10 @@
 //   montar:  pecas: peças na ordem certa
 //            extras: peças "pegadinha" que não fazem parte da resposta
 //
+// exemplo (opcional): comando SQL executado depois da resposta para mostrar a tabela.
+//   Se faltar, o jogo usa a resposta certa (montar) ou a alternativa certa (quando é um comando).
+//   As tabelas de exemplo estão em js/tabela.js: alunos, pets, livros.
+//
 // Em cada partida o jogo sorteia, para cada tema, 1 pergunta de cada tipo.
 
 export const TEMAS = [
@@ -28,30 +32,35 @@ export const PERGUNTAS = [
   {
     tema: 'create', tipo: 'vf',
     pergunta: 'O comando `CREATE TABLE` serve para criar uma nova tabela no banco de dados.',
+    exemplo: "CREATE TABLE alunos (nome TEXT, idade INTEGER);",
     resposta: true,
     explicacao: '`CREATE TABLE` cria uma tabela nova, dizendo o nome dela e quais colunas ela terá.',
   },
   {
     tema: 'create', tipo: 'vf',
     pergunta: 'O tipo `INTEGER` é usado para guardar textos, como o nome de uma pessoa.',
+    exemplo: "CREATE TABLE alunos (nome TEXT, idade INTEGER);",
     resposta: false,
     explicacao: '`INTEGER` guarda números inteiros (como 12 ou 2025). Para textos usamos `TEXT`.',
   },
   {
     tema: 'create', tipo: 'vf',
     pergunta: 'No `CREATE TABLE`, as colunas ficam dentro de parênteses e são separadas por vírgulas.',
+    exemplo: "CREATE TABLE alunos (nome TEXT, idade INTEGER);",
     resposta: true,
     explicacao: 'Exemplo: `CREATE TABLE alunos (nome TEXT, idade INTEGER);` — colunas entre parênteses, separadas por vírgula.',
   },
   {
     tema: 'create', tipo: 'vf',
     pergunta: 'Logo depois de criada com `CREATE TABLE`, a tabela já vem cheia de dados.',
+    exemplo: "CREATE TABLE alunos (nome TEXT, idade INTEGER);",
     resposta: false,
     explicacao: 'A tabela nasce vazia: só com as colunas. Os dados são adicionados depois, com `INSERT INTO`.',
   },
   {
     tema: 'create', tipo: 'escolha',
     pergunta: 'Qual tipo de dado é o mais indicado para a coluna `idade`?',
+    exemplo: "CREATE TABLE alunos (nome TEXT, idade INTEGER);",
     alternativas: ['INTEGER', 'TEXT', 'TABLE', 'SELECT'],
     correta: 0, codigo: true,
     explicacao: 'Idade é um número inteiro, então o tipo certo é `INTEGER`.',
@@ -71,6 +80,7 @@ export const PERGUNTAS = [
   {
     tema: 'create', tipo: 'escolha',
     pergunta: 'Qual tipo de dado usar na coluna `cidade`, que guarda nomes como \'Recife\'?',
+    exemplo: "CREATE TABLE amigos (nome TEXT, cidade TEXT);",
     alternativas: ['TEXT', 'INTEGER', 'WHERE'],
     correta: 0, codigo: true,
     explicacao: 'Nomes de cidades são textos, então usamos `TEXT`.',
@@ -78,6 +88,7 @@ export const PERGUNTAS = [
   {
     tema: 'create', tipo: 'escolha',
     pergunta: 'No comando `CREATE TABLE livros (titulo TEXT, paginas INTEGER);` qual é o nome da tabela?',
+    exemplo: "CREATE TABLE livros (titulo TEXT, paginas INTEGER);",
     alternativas: ['livros', 'titulo', 'paginas', 'TEXT'],
     correta: 0, codigo: true,
     explicacao: 'O nome da tabela vem logo depois de `CREATE TABLE`: `livros`. `titulo` e `paginas` são colunas.',
@@ -108,42 +119,47 @@ export const PERGUNTAS = [
   {
     tema: 'insert', tipo: 'vf',
     pergunta: 'O comando `INSERT INTO` serve para adicionar uma nova linha em uma tabela.',
+    exemplo: "INSERT INTO alunos VALUES ('Lia', 12, '7A');",
     resposta: true,
     explicacao: 'Cada `INSERT INTO` adiciona um novo registro (uma linha) na tabela.',
   },
   {
     tema: 'insert', tipo: 'vf',
     pergunta: 'No `INSERT INTO`, textos como \'Ana\' devem ficar entre aspas simples.',
+    exemplo: "INSERT INTO alunos VALUES ('Ana', 12, '7A');",
     resposta: true,
     explicacao: 'Textos vão entre aspas simples: `\'Ana\'`. Assim o banco sabe onde o texto começa e termina.',
   },
   {
     tema: 'insert', tipo: 'vf',
     pergunta: 'Números, como a idade 12, também precisam ficar entre aspas no `INSERT INTO`.',
+    exemplo: "INSERT INTO alunos VALUES ('Ana', 12, '7A');",
     resposta: false,
-    explicacao: 'Números são escritos sem aspas: `VALUES (\'Ana\', 12)`.',
+    explicacao: 'Números são escritos sem aspas: `VALUES (\'Ana\', 12, \'7A\')`.',
   },
   {
     tema: 'insert', tipo: 'vf',
     pergunta: 'O comando `INSERT INTO` pode ser usado para apagar uma tabela.',
+    exemplo: "INSERT INTO pets VALUES ('Toby', 2);",
     resposta: false,
     explicacao: '`INSERT INTO` só adiciona dados. Ele nunca apaga tabelas.',
   },
   {
     tema: 'insert', tipo: 'escolha',
-    pergunta: 'Qual comando cadastra a aluna Ana, de 12 anos, na tabela `alunos`?',
+    pergunta: 'Qual comando cadastra a aluna Ana, de 12 anos, da turma \'7A\', na tabela `alunos`?',
     alternativas: [
-      "INSERT INTO alunos VALUES ('Ana', 12);",
-      'INSERT alunos VALUES (Ana, 12);',
-      "SELECT INTO alunos VALUES ('Ana', 12);",
-      "INSERT INTO alunos ('Ana', 12);",
+      "INSERT INTO alunos VALUES ('Ana', 12, '7A');",
+      'INSERT alunos VALUES (Ana, 12, 7A);',
+      "SELECT INTO alunos VALUES ('Ana', 12, '7A');",
+      "INSERT INTO alunos ('Ana', 12, '7A');",
     ],
     correta: 0, codigo: true,
-    explicacao: 'O formato é `INSERT INTO tabela VALUES (...)`, com o texto entre aspas e o número sem aspas.',
+    explicacao: 'O formato é `INSERT INTO tabela VALUES (...)`, com os textos entre aspas e o número sem aspas.',
   },
   {
     tema: 'insert', tipo: 'escolha',
     pergunta: 'No `INSERT INTO`, qual palavra vem antes dos dados entre parênteses?',
+    exemplo: "INSERT INTO pets VALUES ('Toby', 2);",
     alternativas: ['VALUES', 'WHERE', 'TABLE', 'SET'],
     correta: 0, codigo: true,
     explicacao: '`VALUES` significa "valores": logo depois vêm os dados da nova linha.',
@@ -151,15 +167,17 @@ export const PERGUNTAS = [
   {
     tema: 'insert', tipo: 'escolha',
     pergunta: 'A coluna `nome` da tabela `pets` é do tipo `TEXT`. Qual valor está escrito do jeito certo?',
+    exemplo: "INSERT INTO pets VALUES ('Rex', 3);",
     alternativas: ["'Rex'", 'Rex', '(Rex)'],
     correta: 0, codigo: true,
     explicacao: 'Textos precisam de aspas simples: `\'Rex\'`.',
   },
   {
     tema: 'insert', tipo: 'escolha',
-    pergunta: 'O que acontece depois de executar `INSERT INTO alunos VALUES (\'Bia\', 13);`?',
+    pergunta: 'O que acontece depois de executar `INSERT INTO alunos VALUES (\'Bia\', 13, \'7A\');`?',
+    exemplo: "INSERT INTO alunos VALUES ('Bia', 13, '7A');",
     alternativas: [
-      'Uma nova linha com Bia e 13 é adicionada',
+      'Uma nova linha com Bia, 13 e 7A é adicionada',
       'A tabela alunos é apagada',
       'Todos os alunos passam a se chamar Bia',
       'A tabela mostra só a Bia na tela',
@@ -169,10 +187,10 @@ export const PERGUNTAS = [
   },
   {
     tema: 'insert', tipo: 'montar',
-    pergunta: 'Monte o comando que cadastra o aluno Pedro, de 13 anos, na tabela `alunos`.',
-    pecas: ['INSERT INTO', 'alunos', 'VALUES', "('Pedro', 13);"],
-    extras: ['WHERE', '(Pedro, 13);'],
-    explicacao: 'O texto `\'Pedro\'` vai entre aspas; o número 13, sem aspas.',
+    pergunta: 'Monte o comando que cadastra o aluno Pedro, de 13 anos, da turma \'7B\', na tabela `alunos`.',
+    pecas: ['INSERT INTO', 'alunos', 'VALUES', "('Pedro', 13, '7B');"],
+    extras: ['WHERE', '(Pedro, 13, 7B);'],
+    explicacao: 'Os textos `\'Pedro\'` e `\'7B\'` vão entre aspas; o número 13, sem aspas.',
   },
   {
     tema: 'insert', tipo: 'montar',
@@ -193,24 +211,28 @@ export const PERGUNTAS = [
   {
     tema: 'select', tipo: 'vf',
     pergunta: '`SELECT * FROM alunos;` mostra todas as colunas da tabela `alunos`.',
+    exemplo: "SELECT * FROM alunos;",
     resposta: true,
     explicacao: 'O `*` significa "todas as colunas".',
   },
   {
     tema: 'select', tipo: 'vf',
     pergunta: 'O comando `SELECT` altera os dados que estão na tabela.',
+    exemplo: "SELECT * FROM alunos;",
     resposta: false,
     explicacao: '`SELECT` só consulta (mostra) os dados. Quem altera é o `UPDATE`.',
   },
   {
     tema: 'select', tipo: 'vf',
     pergunta: 'No `SELECT`, o nome da tabela vem depois da palavra `FROM`.',
+    exemplo: "SELECT nome FROM alunos;",
     resposta: true,
     explicacao: '`FROM` quer dizer "de": `SELECT nome FROM alunos` = mostre o nome DE alunos.',
   },
   {
     tema: 'select', tipo: 'vf',
     pergunta: '`SELECT nome FROM alunos;` mostra todas as colunas da tabela.',
+    exemplo: "SELECT nome FROM alunos;",
     resposta: false,
     explicacao: 'Esse comando mostra apenas a coluna `nome`. Para todas as colunas usamos `*`.',
   },
@@ -229,6 +251,7 @@ export const PERGUNTAS = [
   {
     tema: 'select', tipo: 'escolha',
     pergunta: 'O que significa o `*` em `SELECT * FROM pets;`?',
+    exemplo: "SELECT * FROM pets;",
     alternativas: ['Todas as colunas', 'Apenas a primeira coluna', 'Multiplicar os valores', 'Apagar tudo'],
     correta: 0,
     explicacao: 'No `SELECT`, o `*` é um atalho para "todas as colunas".',
@@ -248,6 +271,7 @@ export const PERGUNTAS = [
   {
     tema: 'select', tipo: 'escolha',
     pergunta: 'Para que serve a palavra `FROM` no `SELECT`?',
+    exemplo: "SELECT nome FROM alunos;",
     alternativas: [
       'Indicar de qual tabela vêm os dados',
       'Filtrar as linhas',
@@ -283,24 +307,28 @@ export const PERGUNTAS = [
   {
     tema: 'where', tipo: 'vf',
     pergunta: 'A cláusula `WHERE` serve para filtrar quais linhas aparecem no resultado.',
+    exemplo: "SELECT * FROM alunos WHERE idade > 12;",
     resposta: true,
     explicacao: 'O `WHERE` é um filtro: só aparecem as linhas que obedecem à condição.',
   },
   {
     tema: 'where', tipo: 'vf',
     pergunta: 'No `SELECT`, o `WHERE` vem antes do `FROM`.',
+    exemplo: "SELECT * FROM alunos WHERE turma = '7A';",
     resposta: false,
     explicacao: 'A ordem é `SELECT ... FROM ... WHERE ...`. O `WHERE` vem depois do nome da tabela.',
   },
   {
     tema: 'where', tipo: 'vf',
     pergunta: '`SELECT * FROM alunos WHERE idade = 12;` mostra apenas os alunos com 12 anos.',
+    exemplo: "SELECT * FROM alunos WHERE idade = 12;",
     resposta: true,
     explicacao: 'A condição `idade = 12` deixa passar só as linhas em que a idade é 12.',
   },
   {
     tema: 'where', tipo: 'vf',
     pergunta: 'Para buscar o texto Ana, está certo escrever `WHERE nome = Ana` (sem aspas).',
+    exemplo: "SELECT * FROM alunos WHERE nome = 'Ana';",
     resposta: false,
     explicacao: 'Textos precisam de aspas simples: `WHERE nome = \'Ana\'`.',
   },
@@ -331,6 +359,7 @@ export const PERGUNTAS = [
   {
     tema: 'where', tipo: 'escolha',
     pergunta: 'Qual símbolo significa "menor que" no `WHERE`?',
+    exemplo: "SELECT * FROM alunos WHERE idade < 12;",
     alternativas: ['<', '>', '=', '*'],
     correta: 0, codigo: true,
     explicacao: '`<` é "menor que", `>` é "maior que" e `=` é "igual a".',
@@ -338,6 +367,7 @@ export const PERGUNTAS = [
   {
     tema: 'where', tipo: 'escolha',
     pergunta: 'A tabela `pets` tem: Rex (3 anos), Mia (5 anos) e Bob (8 anos). Quantas linhas aparecem em `SELECT * FROM pets WHERE idade > 4;`?',
+    exemplo: "SELECT * FROM pets WHERE idade > 4;",
     alternativas: ['2', '1', '3', '0'],
     correta: 0,
     explicacao: 'Só Mia (5) e Bob (8) têm mais de 4 anos. Rex (3) fica de fora.',
@@ -368,24 +398,28 @@ export const PERGUNTAS = [
   {
     tema: 'update', tipo: 'vf',
     pergunta: 'O comando `UPDATE` serve para alterar dados que já existem na tabela.',
+    exemplo: "UPDATE alunos SET idade = 13 WHERE nome = 'Ana';",
     resposta: true,
     explicacao: '`UPDATE` quer dizer "atualizar": ele muda valores de linhas que já existem.',
   },
   {
     tema: 'update', tipo: 'vf',
     pergunta: 'Um `UPDATE` sem `WHERE` altera todas as linhas da tabela.',
+    exemplo: "UPDATE alunos SET turma = '7C';",
     resposta: true,
     explicacao: 'Cuidado! Sem `WHERE`, o banco altera TODAS as linhas. O `WHERE` escolhe quais mudar.',
   },
   {
     tema: 'update', tipo: 'vf',
     pergunta: 'No `UPDATE`, a palavra `VALUES` indica o novo valor da coluna.',
+    exemplo: "UPDATE alunos SET idade = 13 WHERE nome = 'Ana';",
     resposta: false,
     explicacao: 'No `UPDATE` usamos `SET`: `UPDATE alunos SET idade = 13`. `VALUES` é do `INSERT INTO`.',
   },
   {
     tema: 'update', tipo: 'vf',
     pergunta: 'O comando `UPDATE` serve para criar uma tabela nova.',
+    exemplo: "UPDATE pets SET idade = 4 WHERE nome = 'Rex';",
     resposta: false,
     explicacao: 'Quem cria tabela é o `CREATE TABLE`. O `UPDATE` altera dados.',
   },
@@ -404,6 +438,7 @@ export const PERGUNTAS = [
   {
     tema: 'update', tipo: 'escolha',
     pergunta: 'Em um `UPDATE`, qual palavra vem logo depois do nome da tabela?',
+    exemplo: "UPDATE alunos SET idade = 14 WHERE nome = 'Pedro';",
     alternativas: ['SET', 'FROM', 'VALUES', 'INTO'],
     correta: 0, codigo: true,
     explicacao: '`UPDATE alunos SET ...` — o `SET` diz qual coluna vai mudar e para qual valor.',
@@ -411,6 +446,7 @@ export const PERGUNTAS = [
   {
     tema: 'update', tipo: 'escolha',
     pergunta: 'O que acontece com `UPDATE pets SET idade = 4;` (sem `WHERE`)?',
+    exemplo: "UPDATE pets SET idade = 4;",
     alternativas: [
       'Todos os pets ficam com idade 4',
       'Só o primeiro pet muda',
@@ -423,6 +459,7 @@ export const PERGUNTAS = [
   {
     tema: 'update', tipo: 'escolha',
     pergunta: 'Qual é a função do `WHERE` em um `UPDATE`?',
+    exemplo: "UPDATE pets SET idade = 6 WHERE nome = 'Mia';",
     alternativas: [
       'Escolher quais linhas serão alteradas',
       'Escolher o nome da tabela',

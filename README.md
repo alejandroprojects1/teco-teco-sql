@@ -12,6 +12,15 @@ Feito para funcionar **principalmente no celular**, direto no navegador, sem ins
 - Você tem **5 vidas**: bater em um obstáculo ou errar uma pergunta tira 1 vida.
 - Responda **rápido** para ganhar bônus de tempo, e acerte **em sequência** para ativar o combo (3 seguidas = x2, 5 seguidas = x3).
 - Pegue as **estrelas** no caminho para ganhar pontos extras.
+- Depois de cada resposta, o jogo **executa o comando SQL de verdade** e mostra a tabela: a linha nova do `INSERT`, as linhas filtradas pelo `WHERE`, o valor alterado pelo `UPDATE`.
+
+## Modo treino
+
+Na tela inicial, toque em **Modo treino** e escolha um tema (ou "Todos os temas"):
+
+- **sem obstáculos**, **sem cronômetro** e **sem pontos**: o aluno responde com calma;
+- todas as perguntas do tema, com explicação e tabela depois de cada uma;
+- no final, um resumo com os acertos e a sugestão de jogar valendo pontos.
 
 ## Conteúdo
 
@@ -51,7 +60,8 @@ Depois acesse `http://localhost:8000`.
 | Arquivo | O que dá para mudar |
 |---|---|
 | `js/perguntas.js` | Adicionar, editar ou remover perguntas (há instruções no topo do arquivo) |
-| `js/config.js` | Turmas, número de vidas, tempo de cada pergunta, pontuação e combo |
+| `js/config.js` | Turma, número de vidas, tempo de cada pergunta, pontuação, combo e modo treino |
+| `js/tabela.js` | Os dados das tabelas de exemplo (`alunos`, `pets`, `livros`) usadas para mostrar os resultados |
 
 ## Estrutura
 
@@ -62,20 +72,22 @@ js/main.js          Telas, regras da partida, pontuação e controles
 js/mundo.js         Cenário 3D, obstáculos, câmera e colisões
 js/aviao.js         O teco-teco em 3D (modelo feito em código)
 js/quiz.js          Painel de perguntas
+js/tabela.js        Executa o SQL (SQLite no navegador) e desenha a tabela
 js/perguntas.js     Banco de perguntas
 js/audio.js         Efeitos sonoros (gerados no navegador)
 js/config.js        Configurações
-vendor/             Three.js (biblioteca 3D, licença MIT)
+vendor/             Three.js (3D) e sql.js (SQLite no navegador), ambos MIT
 assets/             Ícones
 ```
 
 ## Próximas etapas
 
 - [x] **Etapa 1**: jogo completo no celular (avião, obstáculos, vidas, perguntas, tempo, combo e resultado)
-- [ ] **Etapa 2**: modo treino (escolher o tema) e tabela mostrando o resultado de cada comando
+- [x] **Etapa 2**: modo treino (escolher o tema) e tabela mostrando o resultado de cada comando
 - [ ] **Etapa 3**: ranking online por turma e área do professor (editar nomes e zerar o ranking)
 
 ## Créditos
 
 - Gráficos 3D feitos com [Three.js](https://threejs.org) (MIT).
+- Banco de dados no navegador com [sql.js](https://sql.js.org) (MIT).
 - Fontes [Fredoka](https://fonts.google.com/specimen/Fredoka) e [JetBrains Mono](https://fonts.google.com/specimen/JetBrains+Mono) (Google Fonts, OFL).

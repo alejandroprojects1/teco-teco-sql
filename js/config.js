@@ -11,6 +11,10 @@ export const CONFIG = {
   // Tempo (segundos) para responder, por tipo de pergunta
   tempo: { vf: 20, escolha: 25, montar: 45 },
 
+  // Modo treino: sem obstáculos, sem tempo e sem pontos
+  treino: { intervaloPrimeira: 2.5, intervalo: 3 },
+  perguntasTreinoMisturado: 15, // quando o aluno escolhe "Todos os temas"
+
   // Segundos de voo entre uma pergunta e outra
   intervaloPrimeiraPergunta: 4,
   intervaloPerguntas: 7,

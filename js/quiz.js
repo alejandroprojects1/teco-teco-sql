@@ -2,6 +2,7 @@
 import { som } from './audio.js';
 import { TEMAS } from './perguntas.js';
 import { CONFIG } from './config.js';
+import { demonstrar, desenharDemonstracao, comandoDaPergunta } from './tabela.js';
 
 const painel = document.getElementById('painel-pergunta');
 
@@ -35,8 +36,9 @@ let estadoAtual = null;
 /**
  * Mostra a pergunta e espera a resposta.
  * Resolve com { correto, fracaoTempo, esgotou }.
+ * semTempo: sem cronômetro (modo treino).
  */
-export function perguntar(q, { numero, total }) {
+export function perguntar(q, { numero, total, semTempo = false }) {
   const tema = TEMAS.find((t) => t.id === q.tema);
   const tempoTotal = CONFIG.tempo[q.tipo];
 
@@ -46,7 +48,7 @@ export function perguntar(q, { numero, total }) {
         <span class="chip-tema">${esc(tema.nome)}</span>
         <span class="pq-num">${numero} de ${total}</span>
       </div>
-      <div class="pq-tempo" aria-hidden="true"><div class="pq-tempo-barra"></div></div>
+      ${semTempo ? '<div class="pq-sem-tempo">Sem pressa: pense com calma</div>' : '<div class="pq-tempo" aria-hidden="true"><div class="pq-tempo-barra"></div></div>'}
       <div class="pq-tipo">${TIPOS[q.tipo]}</div>
       <h2 id="pq-texto" class="pq-texto">${formatar(q.pergunta)}</h2>
       <div class="pq-corpo"></div>
@@ -69,7 +71,7 @@ export function perguntar(q, { numero, total }) {
       encerrada = true;
       cancelAnimationFrame(raf);
       const decorrido = (performance.now() - inicio) / 1000;
-      const fracaoTempo = Math.max(0, 1 - decorrido / tempoTotal);
+      const fracaoTempo = semTempo ? 1 : Math.max(0, 1 - decorrido / tempoTotal);
       cartao.classList.add('respondida', correto ? 'acertou' : 'errou');
       corpo.querySelectorAll('button').forEach((b) => { b.disabled = true; });
       resolver({ correto, fracaoTempo, ...extras });
@@ -87,7 +89,7 @@ export function perguntar(q, { numero, total }) {
       }
       raf = requestAnimationFrame(tique);
     };
-    raf = requestAnimationFrame(tique);
+    if (!semTempo) raf = requestAnimationFrame(tique);
 
     let marcarRespostaCerta = () => {};
 
@@ -201,7 +203,7 @@ export function perguntar(q, { numero, total }) {
 /**
  * Mostra o retorno (acertou/errou + explicação) e espera o botão "Continuar".
  */
-export function mostrarRetorno({ correto, esgotou, pontos, combo, textoBotao }) {
+export function mostrarRetorno({ correto, esgotou, pontos, combo, textoBotao, treino = false }) {
   const { cartao, q } = estadoAtual;
   const retorno = cartao.querySelector('.pq-retorno');
   const titulo = correto ? 'Acertou!' : esgotou ? 'Tempo esgotado!' : 'Não foi dessa vez';
@@ -211,15 +213,19 @@ export function mostrarRetorno({ correto, esgotou, pontos, combo, textoBotao }) 
       <span class="retorno-icone">${icone}</span>
       <div class="retorno-titulo">
         <strong>${titulo}</strong>
-        <span>${correto ? `+${pontos} pontos${combo > 1 ? ` · combo x${combo}` : ''}` : 'Você perdeu 1 vida'}</span>
+        <span>${treino
+          ? (correto ? 'Muito bem, piloto!' : 'Tudo bem, é treino! Leia a explicação.')
+          : (correto ? `+${pontos} pontos${combo > 1 ? ` · combo x${combo}` : ''}` : 'Você perdeu 1 vida')}</span>
       </div>
     </div>
     <p class="retorno-explicacao">${formatar(q.explicacao)}</p>
+    <div class="demo-espaco"></div>
     <button class="btn btn-principal btn-continuar">${textoBotao}</button>`;
   retorno.hidden = false;
-  cartao.querySelector('.pq-tempo').classList.add('parado');
+  cartao.querySelector('.pq-tempo')?.classList.add('parado');
+  mostrarDemonstracao(q, retorno.querySelector('.demo-espaco'));
   // Garante que o botão fique visível em telas pequenas
-  requestAnimationFrame(() => retorno.scrollIntoView({ behavior: 'smooth', block: 'end' }));
+  requestAnimationFrame(() => retorno.scrollIntoView({ behavior: 'smooth', block: 'start' }));
 
   return new Promise((resolver) => {
     const btn = retorno.querySelector('.btn-continuar');
@@ -231,4 +237,19 @@ export function mostrarRetorno({ correto, esgotou, pontos, combo, textoBotao }) 
 export function fecharPergunta() {
   painel.classList.remove('visivel');
   return new Promise((r) => setTimeout(() => { painel.hidden = true; painel.innerHTML = ''; r(); }, 220));
+}
+
+// Executa o comando de exemplo e mostra a tabela no retorno
+async function mostrarDemonstracao(q, espaco) {
+  const sql = comandoDaPergunta(q);
+  if (!sql || !espaco) return;
+  espaco.innerHTML = '<div class="demo demo-carregando"><span class="demo-girando"></span>Executando o comando…</div>';
+  try {
+    const r = await demonstrar(sql);
+    if (!espaco.isConnected) return;
+    espaco.innerHTML = desenharDemonstracao(sql, r);
+  } catch (erro) {
+    console.warn('Não foi possível mostrar a tabela:', erro);
+    espaco.innerHTML = '';
+  }
 }

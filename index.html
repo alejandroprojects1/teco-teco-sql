@@ -50,11 +50,46 @@
         Decolar
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.6 10.6L20.4 3.3c.6-.2 1.1.3.9.9l-7.3 17.8c-.3.7-1.3.6-1.5-.1l-1.9-6.6-6.6-1.9c-.7-.2-.8-1.2-.1-1.5z" fill="currentColor"/><path d="M10.6 13.4l5-5" stroke="#fff" stroke-opacity=".5" stroke-width="1.6" stroke-linecap="round"/></svg>
       </button>
+      <button type="button" id="btn-treino" class="btn btn-secundario btn-treino">
+        <span aria-hidden="true">📚</span> Modo treino
+      </button>
       <div class="linha-sec">
         <button type="button" id="btn-como" class="btn-link">Como jogar</button>
-        <span class="em-breve">Modo treino · em breve</span>
       </div>
     </form>
+  </section>
+
+  <!-- Modo treino: escolher tema -->
+  <section id="tela-treino" class="tela tela-treino" aria-label="Modo treino">
+    <div class="cartao cartao-treino">
+      <div class="treino-topo">
+        <button id="btn-voltar-treino" class="btn-redondo btn-voltar" aria-label="Voltar">
+          <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div>
+          <h2>Modo treino</h2>
+          <p>Sem obstáculos, sem tempo e sem pontos. Só aprender!</p>
+        </div>
+      </div>
+      <div id="lista-temas" class="lista-temas"></div>
+    </div>
+  </section>
+
+  <!-- Modo treino: resumo -->
+  <section id="tela-fim-treino" class="tela tela-resultado" aria-label="Resumo do treino">
+    <div class="cartao cartao-resultado">
+      <div id="treino-selo" class="res-selo"></div>
+      <h2 id="treino-titulo" class="res-titulo"></h2>
+      <div id="treino-tema" class="treino-tema"></div>
+      <p id="treino-placar" class="treino-placar"></p>
+      <div id="treino-bolinhas" class="treino-bolinhas"></div>
+      <p id="treino-dica" class="res-sub"></p>
+      <div class="res-botoes">
+        <button id="btn-treino-de-novo" class="btn btn-principal btn-grande">Treinar de novo</button>
+        <button id="btn-treino-outro" class="btn btn-secundario">Escolher outro tema</button>
+        <button id="btn-treino-jogar" class="btn btn-secundario">Jogar valendo pontos ✈️</button>
+      </div>
+    </div>
   </section>
 
   <!-- HUD do jogo -->

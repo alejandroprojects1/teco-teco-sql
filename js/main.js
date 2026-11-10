@@ -3,6 +3,7 @@ import { Mundo } from './mundo.js';
 import { CONFIG } from './config.js';
 import { TEMAS, PERGUNTAS } from './perguntas.js';
 import { perguntar, mostrarRetorno, fecharPergunta, embaralhar } from './quiz.js';
+import { prepararSQL } from './tabela.js';
 import { som, iniciarAudio, alternarSom, estaMudo, motorLigado, motorVelocidade, vibrar } from './audio.js';
 
 const $ = (id) => document.getElementById(id);
@@ -79,6 +80,36 @@ $('form-inicio').addEventListener('submit', (ev) => {
 $('btn-como').addEventListener('click', () => { iniciarAudio(); som.clique(); $('tela-como').hidden = false; });
 $('btn-fechar-como').addEventListener('click', () => { som.clique(); $('tela-como').hidden = true; });
 
+// ───────────── Modo treino: escolha do tema ─────────────
+const ICONES_TEMA = { create: '🧱', insert: '➕', select: '🔍', where: '🎯', update: '✏️' };
+$('lista-temas').innerHTML = TEMAS.map((t) => {
+  const n = PERGUNTAS.filter((p) => p.tema === t.id).length;
+  return `
+    <button class="btn-tema tema-${t.id}" data-tema="${t.id}">
+      <span class="btn-tema-icone">${ICONES_TEMA[t.id]}</span>
+      <span class="btn-tema-textos"><span class="chip-tema">${t.nome}</span><span class="btn-tema-desc">${t.descricao} · ${n} perguntas</span></span>
+    </button>`;
+}).join('') + `
+    <button class="btn-tema tema-todos" data-tema="todos">
+      <span class="btn-tema-icone">🎲</span>
+      <span class="btn-tema-textos"><strong>Todos os temas</strong><span class="btn-tema-desc">Mistura · ${CONFIG.perguntasTreinoMisturado} perguntas</span></span>
+    </button>`;
+
+$('btn-treino').addEventListener('click', () => { iniciarAudio(); som.clique(); mostrarTela('tela-treino'); });
+$('btn-voltar-treino').addEventListener('click', () => { som.clique(); mostrarTela('tela-inicio'); });
+$('lista-temas').addEventListener('click', (ev) => {
+  const b = ev.target.closest('.btn-tema');
+  if (!b) return;
+  iniciarAudio();
+  som.clique();
+  novaPartida('treino', b.dataset.tema);
+});
+
+function montarTreino(tema) {
+  if (tema === 'todos') return embaralhar(PERGUNTAS).slice(0, CONFIG.perguntasTreinoMisturado);
+  return embaralhar(PERGUNTAS.filter((p) => p.tema === tema));
+}
+
 // ───────────── Partida ─────────────
 function montarPerguntas() {
   const lista = [];
@@ -98,26 +129,30 @@ function montarPerguntas() {
   return lista;
 }
 
-function novaPartida() {
+function novaPartida(modo = 'jogo', temaTreino = null) {
+  const treino = modo === 'treino';
   estado = {
+    treino,
+    temaTreino,
     vidas: CONFIG.vidas,
     pontos: 0,
     combo: 0,
     maiorCombo: 0,
     acertos: 0,
     estrelas: 0,
-    perguntas: montarPerguntas(),
+    perguntas: treino ? montarTreino(temaTreino) : montarPerguntas(),
     respondidas: 0,
     resultados: [], // { tema, correto }
-    proximaEm: CONFIG.intervaloPrimeiraPergunta,
-    tempoEntre: CONFIG.intervaloPrimeiraPergunta,
+    proximaEm: treino ? CONFIG.treino.intervaloPrimeira : CONFIG.intervaloPrimeiraPergunta,
+    tempoEntre: treino ? CONFIG.treino.intervaloPrimeira : CONFIG.intervaloPrimeiraPergunta,
   };
   mostrarTela(null);
   $('hud').hidden = false;
+  $('hud').classList.toggle('hud-treino', treino);
   $('dica-arraste').classList.remove('sumiu');
   setTimeout(() => $('dica-arraste').classList.add('sumiu'), 3500);
   atualizarHUD();
-  mundo.iniciarJogo();
+  mundo.iniciarJogo(!treino);
   motorLigado(true);
   fase = 'contagem';
   contagem().then(() => { fase = 'voo'; });
@@ -135,12 +170,14 @@ async function abrirPergunta() {
   const q = estado.perguntas[estado.respondidas];
   const numero = estado.respondidas + 1;
   const total = estado.perguntas.length;
-  const r = await perguntar(q, { numero, total });
+  const r = await perguntar(q, { numero, total, semTempo: estado.treino });
 
   estado.respondidas++;
   estado.resultados.push({ tema: q.tema, correto: r.correto });
   let ganhos = 0;
-  if (r.correto) {
+  if (estado.treino) {
+    if (r.correto) { estado.acertos++; som.acerto(); vibrar(30); confete(); } else { som.erro(); vibrar([60, 40, 60]); }
+  } else if (r.correto) {
     estado.combo++;
     estado.maiorCombo = Math.max(estado.maiorCombo, estado.combo);
     estado.acertos++;
@@ -158,22 +195,24 @@ async function abrirPergunta() {
   }
   atualizarHUD(true);
 
-  const acabou = estado.vidas <= 0 || estado.respondidas >= estado.perguntas.length;
+  const acabou = (!estado.treino && estado.vidas <= 0) || estado.respondidas >= estado.perguntas.length;
   await mostrarRetorno({
     correto: r.correto,
     esgotou: r.esgotou,
     pontos: ganhos,
     combo: multiplicador(estado.combo),
-    textoBotao: acabou ? 'Ver resultado' : 'Continuar voo',
+    textoBotao: acabou ? (estado.treino ? 'Ver resumo do treino' : 'Ver resultado') : 'Continuar voo',
+    treino: estado.treino,
   });
   await fecharPergunta();
 
   if (acabou) {
-    finalizar(estado.vidas > 0);
+    if (estado.treino) finalizarTreino(); else finalizar(estado.vidas > 0);
     return;
   }
-  estado.tempoEntre = CONFIG.intervaloPerguntas;
-  estado.proximaEm = CONFIG.intervaloPerguntas;
+  const intervalo = estado.treino ? CONFIG.treino.intervalo : CONFIG.intervaloPerguntas;
+  estado.tempoEntre = intervalo;
+  estado.proximaEm = intervalo;
   mundo.liberarCaminho();
   fase = 'contagem';
   motorLigado(true);
@@ -200,7 +239,7 @@ function contagem() {
 
 // ───────────── Eventos do mundo ─────────────
 mundo.aoBater = () => {
-  if (fase !== 'voo') return;
+  if (fase !== 'voo' || estado.treino) return;
   estado.vidas--;
   som.batida();
   vibrar(120);
@@ -217,9 +256,10 @@ mundo.aoBater = () => {
 
 mundo.aoPegarEstrela = () => {
   if (fase !== 'voo') return;
+  som.estrela();
+  if (estado.treino) return;
   estado.estrelas++;
   estado.pontos += CONFIG.pontos.estrela;
-  som.estrela();
   atualizarHUD();
 };
 
@@ -238,7 +278,7 @@ function atualizarHUD(animar = false) {
     vidasMostradas = estado.vidas;
   }
   const atual = Math.min(estado.respondidas + (fase === 'pergunta' ? 0 : 1), estado.perguntas.length);
-  $('progresso').innerHTML = `<span class="pilula-rotulo">Pergunta</span> ${atual}/${estado.perguntas.length}`;
+  $('progresso').innerHTML = `<span class="pilula-rotulo">${estado.treino ? 'Treino' : 'Pergunta'}</span> ${atual}/${estado.perguntas.length}`;
   const pontos = $('pontos');
   if (pontos.textContent !== String(estado.pontos)) {
     pontos.textContent = estado.pontos;
@@ -353,6 +393,32 @@ function finalizar(completou) {
   animarNumero($('res-pontos'), total);
 }
 
+function finalizarTreino() {
+  fase = 'fim';
+  motorLigado(false);
+  $('hud').hidden = true;
+  const total = estado.perguntas.length;
+  const tema = TEMAS.find((t) => t.id === estado.temaTreino);
+  const taxa = estado.acertos / total;
+  $('treino-selo').textContent = taxa >= 0.8 ? '🌟' : taxa >= 0.5 ? '👍' : '📚';
+  $('treino-titulo').textContent = taxa >= 0.8 ? 'Mandou muito bem!' : taxa >= 0.5 ? 'Bom treino!' : 'Treinar faz bem!';
+  $('treino-tema').innerHTML = tema
+    ? `<span class="chip-tema tema-${tema.id}">${tema.nome}</span>`
+    : '<span class="chip-tema tema-todos">Todos os temas</span>';
+  $('treino-placar').innerHTML = `<b>${estado.acertos}</b> de ${total} certas`;
+  $('treino-bolinhas').innerHTML = estado.resultados
+    .map((r) => `<i class="bolinha ${r.correto ? 'ok' : 'nao'}"></i>`).join('');
+  $('treino-dica').textContent = taxa >= 0.8
+    ? 'Você está pronto para jogar valendo pontos!'
+    : 'Leia as explicações com calma e treine de novo.';
+  mostrarTela('tela-fim-treino');
+  if (taxa >= 0.8) { som.vitoria(); confete(); } else som.fim();
+}
+
+$('btn-treino-de-novo').addEventListener('click', () => { som.clique(); novaPartida('treino', estado.temaTreino); });
+$('btn-treino-outro').addEventListener('click', () => { som.clique(); irParaInicio(); mostrarTela('tela-treino'); });
+$('btn-treino-jogar').addEventListener('click', () => { som.clique(); irParaInicio(); setTimeout(() => $('nome').focus(), 50); });
+
 function animarNumero(el, alvo) {
   const inicio = performance.now();
   const dur = 1200;
@@ -452,3 +518,5 @@ $('carregando').classList.add('sumiu');
 setTimeout(() => $('carregando').remove(), 600);
 mostrarTela('tela-inicio');
 requestAnimationFrame(quadro);
+// Deixa o SQLite pronto para mostrar as tabelas depois das respostas
+setTimeout(() => prepararSQL().catch(() => {}), 1500);

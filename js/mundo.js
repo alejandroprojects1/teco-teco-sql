@@ -398,6 +398,7 @@ export class Mundo {
     this.obstaculos = [];
     this.estrelas = [];
     this.modo = 'jogo';
+    this.semObstaculos = !comObstaculos;
     this.tempoVoo = 0;
     this.distancia = 0;
     this.velocidade = VEL_MIN;
@@ -458,7 +459,7 @@ export class Mundo {
     } else if (this.modo === 'jogo' && emMovimento) {
       this.tempoVoo += dt;
       const prog = Math.min(1, this.tempoVoo / 110);
-      this.velocidade = VEL_MIN + (VEL_MAX - VEL_MIN) * prog;
+      this.velocidade = this.semObstaculos ? 18 : VEL_MIN + (VEL_MAX - VEL_MIN) * prog;
       this.distancia += this.velocidade * dt;
       this._rolarCenario(dt, this.velocidade);
       this._pilotar(dt);
@@ -524,7 +525,7 @@ export class Mundo {
 
   _gerar(dt, prog) {
     this.proxObstaculo -= dt;
-    if (this.proxObstaculo <= 0) {
+    if (this.proxObstaculo <= 0 && !this.semObstaculos) {
       this._novoObstaculo();
       this.proxObstaculo = THREE.MathUtils.lerp(1.35, 0.62, prog) * rnd(0.8, 1.2);
     }
