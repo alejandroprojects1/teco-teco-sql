@@ -6,8 +6,8 @@ export const CONFIG = {
   //   chave: a chave pública "anon" / "publishable" (NUNCA a "service_role" / "secret")
   // Enquanto estiver vazio, o jogo funciona normalmente, só sem ranking.
   ranking: {
-    url: '',
-    chave: '',
+    url: 'https://gfooxeqeapcupqgqyasl.supabase.co',
+    chave: 'sb_publishable_TQVwCQadH9Xq8xP3qqA0xQ_Yk55mlYs',
   },
 
   // Turmas que aparecem para o aluno escolher.
