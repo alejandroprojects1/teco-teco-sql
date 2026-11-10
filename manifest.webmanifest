@@ -1,0 +1,17 @@
+{
+  "name": "Teco-Teco SQL",
+  "short_name": "Teco-Teco",
+  "description": "Pilote um aviãozinho, desvie dos obstáculos e responda desafios de SQL.",
+  "lang": "pt-BR",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "portrait",
+  "background_color": "#ffdcb8",
+  "theme_color": "#f7c99b",
+  "icons": [
+    { "src": "assets/icone-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "assets/icone-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "assets/icone.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

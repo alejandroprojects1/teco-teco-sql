@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#f7c99b">
+  <meta name="description" content="Teco-Teco SQL: pilote um aviãozinho, desvie dos obstáculos e responda desafios de SQL.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Teco-Teco SQL">
+  <title>Teco-Teco SQL</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="assets/icone.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/icone-180.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/estilo.css">
+</head>
+<body>
+  <canvas id="cena" aria-hidden="true"></canvas>
+
+  <!-- Carregando -->
+  <div id="carregando" class="carregando">
+    <div class="carregando-helice"></div>
+    <span>Preparando o hangar…</span>
+  </div>
+
+  <!-- Tela inicial -->
+  <section id="tela-inicio" class="tela" aria-label="Início">
+    <header class="logo">
+      <div class="logo-titulo">
+        <span class="logo-teco">Teco-Teco</span>
+        <span class="logo-sql">SQL</span>
+      </div>
+      <p class="logo-sub">Pilote, desvie e domine o SQL!</p>
+    </header>
+
+    <form id="form-inicio" class="cartao cartao-inicio" autocomplete="off" novalidate>
+      <label class="campo">
+        <span class="campo-rotulo">Seu nome</span>
+        <input id="nome" name="nome" maxlength="20" placeholder="Ex.: Ana S." enterkeyhint="done" spellcheck="false">
+      </label>
+      <div class="campo">
+        <span class="campo-rotulo">Sua turma</span>
+        <div id="turmas" class="turmas" role="radiogroup" aria-label="Turma"></div>
+      </div>
+      <p id="erro-inicio" class="erro" role="alert" hidden></p>
+      <button type="submit" class="btn btn-principal btn-grande">
+        Decolar
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.6 10.6L20.4 3.3c.6-.2 1.1.3.9.9l-7.3 17.8c-.3.7-1.3.6-1.5-.1l-1.9-6.6-6.6-1.9c-.7-.2-.8-1.2-.1-1.5z" fill="currentColor"/><path d="M10.6 13.4l5-5" stroke="#fff" stroke-opacity=".5" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </button>
+      <div class="linha-sec">
+        <button type="button" id="btn-como" class="btn-link">Como jogar</button>
+        <span class="em-breve">Modo treino · em breve</span>
+      </div>
+    </form>
+  </section>
+
+  <!-- HUD do jogo -->
+  <div id="hud" class="hud" hidden>
+    <div class="hud-topo">
+      <div id="vidas" class="vidas" aria-label="Vidas"></div>
+      <div class="hud-centro">
+        <div id="progresso" class="pilula">1/15</div>
+        <div class="proxima"><div id="proxima-barra" class="proxima-barra"></div></div>
+      </div>
+      <div class="hud-dir">
+        <div id="pontos" class="pontos">0</div>
+        <div id="combo" class="combo" hidden>x2</div>
+      </div>
+    </div>
+    <div class="hud-botoes">
+      <button id="btn-pausa" class="btn-redondo" aria-label="Pausar">
+        <svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1.5" fill="currentColor"/><rect x="14" y="5" width="4" height="14" rx="1.5" fill="currentColor"/></svg>
+      </button>
+      <button id="btn-som" class="btn-redondo" aria-label="Som"></button>
+    </div>
+    <div id="dica-arraste" class="dica-arraste">
+      <div class="dica-dedo"></div>
+      <span>Arraste o dedo para pilotar</span>
+    </div>
+  </div>
+
+  <!-- Pergunta -->
+  <div id="painel-pergunta" class="painel-pergunta" hidden></div>
+
+  <!-- Contagem regressiva -->
+  <div id="contagem" class="contagem" hidden></div>
+
+  <!-- Avisos rápidos (perdeu vida, combo...) -->
+  <div id="avisos" class="avisos" aria-live="polite"></div>
+
+  <!-- Pausa -->
+  <div id="tela-pausa" class="sobreposicao" hidden>
+    <div class="cartao cartao-modal">
+      <h2>Voo pausado</h2>
+      <p>Respire fundo, piloto!</p>
+      <button id="btn-continuar-pausa" class="btn btn-principal btn-grande">Continuar</button>
+      <button id="btn-sair" class="btn btn-secundario">Sair para o início</button>
+    </div>
+  </div>
+
+  <!-- Como jogar -->
+  <div id="tela-como" class="sobreposicao" hidden>
+    <div class="cartao cartao-modal cartao-como">
+      <h2>Como jogar</h2>
+      <ul class="lista-como">
+        <li><span class="como-icone">👆</span><div><strong>Arraste o dedo</strong> em qualquer lugar da tela para pilotar. No computador, use as setas.</div></li>
+        <li><span class="como-icone">☁️</span><div><strong>Desvie</strong> das nuvens de tempestade, dos balões e das torres de blocos.</div></li>
+        <li><span class="como-icone">❓</span><div>De tempos em tempos o voo <strong>para</strong> e aparece uma pergunta de SQL. Responda com calma!</div></li>
+        <li><span class="como-icone">❤️</span><div>Você tem <strong>5 vidas</strong>. Bater ou errar uma pergunta tira 1 vida.</div></li>
+        <li><span class="como-icone">🔥</span><div>Responda <strong>rápido</strong> e acerte <strong>em sequência</strong>: 3 seguidas valem x2, 5 seguidas valem x3!</div></li>
+        <li><span class="como-icone">⭐</span><div>Pegue as <strong>estrelas</strong> no caminho para ganhar pontos extras.</div></li>
+      </ul>
+      <button id="btn-fechar-como" class="btn btn-principal btn-grande">Entendi!</button>
+    </div>
+  </div>
+
+  <!-- Resultado -->
+  <section id="tela-resultado" class="tela tela-resultado" aria-label="Resultado">
+    <div class="cartao cartao-resultado">
+      <div id="res-selo" class="res-selo"></div>
+      <h2 id="res-titulo" class="res-titulo"></h2>
+      <p id="res-sub" class="res-sub"></p>
+      <div class="res-pontos">
+        <span id="res-pontos" class="res-pontos-num">0</span>
+        <span class="res-pontos-rotulo">pontos</span>
+        <span id="res-recorde" class="res-recorde" hidden>Novo recorde!</span>
+      </div>
+      <div id="res-detalhe" class="res-detalhe"></div>
+      <div class="res-stats">
+        <div><strong id="res-acertos">0/15</strong><span>acertos</span></div>
+        <div><strong id="res-combo">0</strong><span>maior combo</span></div>
+        <div><strong id="res-distancia">0 m</strong><span>voados</span></div>
+      </div>
+      <div id="res-temas" class="res-temas"></div>
+      <p class="res-aviso">🏆 O ranking online da turma chega na próxima etapa!</p>
+      <div class="res-botoes">
+        <button id="btn-de-novo" class="btn btn-principal btn-grande">Jogar de novo</button>
+        <button id="btn-inicio" class="btn btn-secundario">Início</button>
+      </div>
+    </div>
+  </section>
+
+  <div id="confete" class="confete" aria-hidden="true"></div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
