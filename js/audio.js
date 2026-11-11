@@ -14,7 +14,8 @@ export function iniciarAudio() {
     mestre.gain.value = mudo ? 0 : 0.7;
     mestre.connect(ctx.destination);
   }
-  if (ctx.state === 'suspended') ctx.resume();
+  // O celular pode suspender o áudio ("suspended" ou, no iPhone, "interrupted")
+  if (ctx.state !== 'running') ctx.resume().catch(() => {});
 }
 
 export function estaMudo() { return mudo; }
@@ -168,6 +169,7 @@ function criarMotor() {
 
 export function motorLigado(ligado) {
   if (!ctx) return;
+  if (ligado) iniciarAudio();
   if (ligado && !motor) {
     motor = criarMotor();
   } else if (!ligado && motor) {

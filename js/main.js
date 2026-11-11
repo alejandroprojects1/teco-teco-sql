@@ -345,7 +345,11 @@ async function despausar() {
 $('btn-pausa').addEventListener('click', () => { som.clique(); pausar(); });
 $('btn-continuar-pausa').addEventListener('click', () => { som.clique(); despausar(); });
 $('btn-sair').addEventListener('click', () => { som.clique(); $('tela-pausa').hidden = true; irParaInicio(); });
-document.addEventListener('visibilitychange', () => { if (document.hidden) pausar(); });
+document.addEventListener('visibilitychange', () => { if (document.hidden) pausar(); else iniciarAudio(); });
+// Qualquer toque reativa o áudio, caso o celular tenha suspendido (comum no iPhone)
+for (const evento of ['pointerdown', 'touchend', 'keydown']) {
+  document.addEventListener(evento, iniciarAudio, { passive: true });
+}
 
 const ICONE_SOM = '<svg viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor"/><path d="M15.5 9a4 4 0 010 6M18 6.5a7.5 7.5 0 010 11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
 const ICONE_MUDO = '<svg viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor"/><path d="M16 9.5l5 5M21 9.5l-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
@@ -548,7 +552,7 @@ function irParaInicio() {
   mostrarTela('tela-inicio');
 }
 
-$('btn-de-novo').addEventListener('click', () => { som.clique(); novaPartida(); });
+$('btn-de-novo').addEventListener('click', () => { iniciarAudio(); som.clique(); novaPartida(); });
 $('btn-inicio').addEventListener('click', () => { som.clique(); irParaInicio(); });
 
 // ───────────── Controles ─────────────
