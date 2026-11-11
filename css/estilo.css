@@ -802,3 +802,13 @@ code {
   align-self: start;
   margin-top: calc(16vh + var(--topo-seguro));
 }
+
+/* Botão de som da tela inicial */
+.btn-som-menu {
+  position: absolute;
+  top: calc(12px + var(--topo-seguro));
+  right: 12px;
+  z-index: 2;
+}
+#tela-inicio .logo { margin-top: max(4vh, 52px); }
+@media (max-height: 640px) { #tela-inicio .logo { margin-top: 48px; } }

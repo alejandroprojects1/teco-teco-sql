@@ -6,6 +6,7 @@ import { perguntar, mostrarRetorno, fecharPergunta, embaralhar } from './quiz.js
 import { prepararSQL } from './tabela.js';
 import { rankingAtivo, enviarPontuacao, buscarRanking, guardarPendente, enviarPendentes } from './ranking.js';
 import { nomeImproprio } from './filtro.js';
+import { tocarMusica, pararMusica } from './musica.js';
 import { som, iniciarAudio, alternarSom, estaMudo, motorLigado, motorVelocidade, vibrar, chuvaVolume, trovao } from './audio.js';
 
 const $ = (id) => document.getElementById(id);
@@ -139,6 +140,7 @@ function montarPerguntas() {
 }
 
 function novaPartida(modo = 'jogo', temaTreino = null) {
+  pararMusica();
   const treino = modo === 'treino';
   estado = {
     treino,
@@ -372,7 +374,9 @@ async function despausar() {
 $('btn-pausa').addEventListener('click', () => { som.clique(); pausar(); });
 $('btn-continuar-pausa').addEventListener('click', () => { som.clique(); despausar(); });
 $('btn-sair').addEventListener('click', () => { som.clique(); $('tela-pausa').hidden = true; irParaInicio(); });
-document.addEventListener('visibilitychange', () => { if (document.hidden) pausar(); else iniciarAudio(); });
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { pausar(); pararMusica(0.1); } else { iniciarAudio(); musicaDoMenu(); }
+});
 // Qualquer toque reativa o áudio, caso o celular tenha suspendido (comum no iPhone)
 for (const evento of ['pointerdown', 'touchend', 'keydown']) {
   document.addEventListener(evento, iniciarAudio, { passive: true });
@@ -380,9 +384,28 @@ for (const evento of ['pointerdown', 'touchend', 'keydown']) {
 
 const ICONE_SOM = '<svg viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor"/><path d="M15.5 9a4 4 0 010 6M18 6.5a7.5 7.5 0 010 11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
 const ICONE_MUDO = '<svg viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor"/><path d="M16 9.5l5 5M21 9.5l-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
-const desenharSom = () => { $('btn-som').innerHTML = estaMudo() ? ICONE_MUDO : ICONE_SOM; };
+const desenharSom = () => {
+  for (const id of ['btn-som', 'btn-som-menu']) {
+    $(id).innerHTML = estaMudo() ? ICONE_MUDO : ICONE_SOM;
+    $(id).setAttribute('aria-label', estaMudo() ? 'Ligar o som' : 'Desligar o som');
+  }
+};
 desenharSom();
-$('btn-som').addEventListener('click', () => { iniciarAudio(); alternarSom(); desenharSom(); });
+for (const id of ['btn-som', 'btn-som-menu']) {
+  $(id).addEventListener('click', () => { iniciarAudio(); alternarSom(); desenharSom(); });
+}
+
+// ───────────── Música de aventura (telas de menu) ─────────────
+// O navegador só deixa tocar som depois de um toque: a música começa no primeiro
+// toque ou tecla em uma tela de menu (o "click" chega depois do botão já ter agido).
+function musicaDoMenu() {
+  if (CONFIG.musica && (fase === 'menu' || fase === 'fim') && !document.hidden) tocarMusica();
+}
+function voltarMusicaDepois() {
+  setTimeout(musicaDoMenu, 2600);
+}
+document.addEventListener('click', () => setTimeout(musicaDoMenu, 0));
+document.addEventListener('keydown', () => setTimeout(musicaDoMenu, 0));
 
 // ───────────── Fim de partida ─────────────
 function finalizar(completou) {
@@ -431,6 +454,7 @@ function finalizar(completou) {
 
   mostrarTela('tela-resultado');
   if (taxa >= 0.65) { som.vitoria(); confete(); } else som.fim();
+  voltarMusicaDepois();
   animarNumero($('res-pontos'), total);
 
   salvarNoRanking({
@@ -555,6 +579,7 @@ function finalizarTreino() {
     : 'Leia as explicações com calma e treine de novo.';
   mostrarTela('tela-fim-treino');
   if (taxa >= 0.8) { som.vitoria(); confete(); } else som.fim();
+  voltarMusicaDepois();
 }
 
 $('btn-treino-de-novo').addEventListener('click', () => { som.clique(); novaPartida('treino', estado.temaTreino); });
@@ -580,6 +605,7 @@ function irParaInicio() {
   $('contagem').hidden = true;
   mundo.voltarAoMenu();
   mostrarTela('tela-inicio');
+  musicaDoMenu();
 }
 
 $('btn-de-novo').addEventListener('click', () => { iniciarAudio(); som.clique(); novaPartida(); });

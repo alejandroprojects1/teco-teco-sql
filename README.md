@@ -15,6 +15,10 @@ Feito para funcionar **principalmente no celular**, direto no navegador, sem ins
 - A partir da **pergunta 5 começa a chover**, e a chuva aumenta a cada pergunta. Na **pergunta 10 vira tempestade**, com relâmpagos e trovões. (No modo treino não chove. Para ajustar ou desligar, veja `chuva` em `js/config.js`.)
 - Depois de cada resposta, o jogo **executa o comando SQL de verdade** e mostra a tabela: a linha nova do `INSERT`, as linhas filtradas pelo `WHERE`, o valor alterado pelo `UPDATE`.
 
+## Música
+
+Nas telas de menu toca uma **música de aventura original**, gerada pelo próprio jogo (sem arquivos de áudio). Ela começa no primeiro toque na tela (os navegadores não deixam tocar som antes disso) e para ao decolar, para dar lugar ao barulho do avião. O botão 🔊 da tela inicial silencia tudo. Para desligar só a música, use `musica: false` em `js/config.js`.
+
 ## Modo treino
 
 Na tela inicial, toque em **Modo treino** e escolha um tema (ou "Todos os temas"):
@@ -105,6 +109,7 @@ js/quiz.js          Painel de perguntas
 js/tabela.js        Executa o SQL (SQLite no navegador) e desenha a tabela
 js/perguntas.js     Banco de perguntas
 js/audio.js         Efeitos sonoros (gerados no navegador)
+js/musica.js        Música de aventura das telas de menu (composição original)
 js/ranking.js       Comunicação com o Supabase (ranking e login)
 js/professor.js     Área do professor
 js/filtro.js        Filtro de nomes impróprios

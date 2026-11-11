@@ -20,6 +20,9 @@ export function iniciarAudio() {
 
 export function estaMudo() { return mudo; }
 
+// Usado pela música (js/musica.js)
+export function saidaDeAudio() { return ctx ? { ctx, mestre } : null; }
+
 export function alternarSom() {
   mudo = !mudo;
   try { localStorage.setItem('teco:mudo', mudo ? '1' : '0'); } catch { /* ignora */ }
@@ -91,7 +94,7 @@ export const som = {
 const VOLUME_MOTOR = 0.42;
 
 let ruidoBuffer = null;
-function bufferDeRuido() {
+export function bufferDeRuido() {
   if (!ruidoBuffer) {
     const n = ctx.sampleRate * 2;
     ruidoBuffer = ctx.createBuffer(1, n, ctx.sampleRate);

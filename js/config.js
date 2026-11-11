@@ -25,6 +25,9 @@ export const CONFIG = {
   treino: { intervaloPrimeira: 2.5, intervalo: 3 },
   perguntasTreinoMisturado: 15, // quando o aluno escolhe "Todos os temas"
 
+  // Música de aventura nas telas de menu (começa no primeiro toque na tela)
+  musica: true,
+
   // Chuva: começa na pergunta 5 e vira tempestade (com relâmpagos) na 10.
   // Não chove no modo treino. Para desligar, use ativa: false.
   chuva: { ativa: true, aPartirDaPergunta: 5, tempestadeNaPergunta: 10 },
