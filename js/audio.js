@@ -194,3 +194,55 @@ export function motorVelocidade(v) {
 export function vibrar(padrao) {
   try { navigator.vibrate?.(padrao); } catch { /* ignora */ }
 }
+
+// ───────────── Chuva e trovão ─────────────
+let chuva = null;
+
+/** Volume da chuva: 0 (sem chuva) a 1 (tempestade). Muda devagar. */
+export function chuvaVolume(intensidade) {
+  if (!ctx) return;
+  if (!chuva && intensidade <= 0) return;
+  if (!chuva) {
+    const fonte = ctx.createBufferSource();
+    fonte.buffer = bufferDeRuido();
+    fonte.loop = true;
+    const grave = ctx.createBiquadFilter();
+    grave.type = 'highpass';
+    grave.frequency.value = 900;
+    const agudo = ctx.createBiquadFilter();
+    agudo.type = 'lowpass';
+    agudo.frequency.value = 7000;
+    const g = ctx.createGain();
+    g.gain.value = 0;
+    fonte.connect(grave).connect(agudo).connect(g).connect(mestre);
+    fonte.start();
+    chuva = { g };
+  }
+  chuva.g.gain.setTargetAtTime(Math.max(0, intensidade) * 0.2, ctx.currentTime, 1.2);
+}
+
+/** Trovão: um estalo seguido de um ronco grave que vai sumindo. */
+export function trovao() {
+  if (!ctx) return;
+  const dur = 3;
+  const n = Math.floor(ctx.sampleRate * dur);
+  const buf = ctx.createBuffer(1, n, ctx.sampleRate);
+  const d = buf.getChannelData(0);
+  let suave = 0;
+  for (let i = 0; i < n; i++) {
+    const t = i / ctx.sampleRate;
+    suave += ((Math.random() * 2 - 1) - suave) * 0.08; // ruído "grosso"
+    const envelope = Math.min(1, t * 30) * Math.exp(-t * 1.4) * (0.65 + 0.35 * Math.sin(t * 9 + Math.sin(t * 3) * 2));
+    d[i] = suave * envelope * 3;
+  }
+  const fonte = ctx.createBufferSource();
+  fonte.buffer = buf;
+  const filtro = ctx.createBiquadFilter();
+  filtro.type = 'lowpass';
+  filtro.frequency.setValueAtTime(900, ctx.currentTime);
+  filtro.frequency.exponentialRampToValueAtTime(140, ctx.currentTime + 1.5);
+  const g = ctx.createGain();
+  g.gain.value = 0.9;
+  fonte.connect(filtro).connect(g).connect(mestre);
+  fonte.start();
+}

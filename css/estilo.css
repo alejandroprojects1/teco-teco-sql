@@ -791,3 +791,14 @@ code {
 .res-ranking.carregando { color: var(--tinta-2); background: var(--creme-2); }
 .res-ranking.ok { background: #fff4d6; color: var(--tinta); box-shadow: inset 0 0 0 2px #ffd36b; }
 .res-ranking.aviso { background: var(--creme-2); color: var(--tinta-2); }
+
+/* Avisos de clima */
+.aviso-clima {
+  font-size: 28px;
+  background: rgba(52, 66, 86, 0.9);
+  box-shadow: 0 10px 30px rgba(30, 40, 60, 0.5);
+  white-space: nowrap;
+  animation-duration: 2s;
+  align-self: start;
+  margin-top: calc(16vh + var(--topo-seguro));
+}

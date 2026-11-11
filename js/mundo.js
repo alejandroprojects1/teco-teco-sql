@@ -20,6 +20,12 @@ const CEU_TOPO = new THREE.Color(0x2f8fe0);
 const CEU_MEIO = new THREE.Color(0x8fd0f7);
 const CEU_HORIZONTE = new THREE.Color(0xffd9b0);
 const CEU_SOL = new THREE.Color(0xfff3d6);
+// Cores do céu durante a tempestade
+const TEMP_TOPO = new THREE.Color(0x3b4656);
+const TEMP_MEIO = new THREE.Color(0x66717f);
+const TEMP_HORIZONTE = new THREE.Color(0x8d959e);
+const BRANCO = new THREE.Color(0xffffff);
+const NUM_GOTAS = 1500;
 
 function alturaTerreno(x, z) {
   const k = (Math.PI * 2) / TRECHO; // periódico no comprimento do trecho: emenda sem costura
@@ -44,12 +50,22 @@ export class Mundo {
     this.camera = new THREE.PerspectiveCamera(55, 1, 0.5, 600);
     this.olhar = new THREE.Vector3(0, Y_CENTRO, 0);
 
-    this.cena.add(new THREE.HemisphereLight(0xcfe8ff, 0xe9c28f, 1.5));
+    this.luzCeu = new THREE.HemisphereLight(0xcfe8ff, 0xe9c28f, 1.5);
+    this.cena.add(this.luzCeu);
     const sol = new THREE.DirectionalLight(0xfff0d8, 2.4);
     sol.position.set(-8, 14, 6);
     this.cena.add(sol);
+    this.sol = sol;
+
+    // Clima: 0 = céu limpo, 1 = tempestade
+    this.chuva = 0;
+    this.chuvaAlvo = 0;
+    this.relampago = 0;
+    this.proxRelampago = 4;
+    this.aoRelampago = null;
 
     this._criarCeu();
+    this._criarChuva();
     this._criarTerreno();
     this._criarGeometriasCompartilhadas();
     this._criarNuvensDecorativas();
@@ -91,10 +107,10 @@ export class Mundo {
       depthWrite: false,
       fog: false,
       uniforms: {
-        topo: { value: CEU_TOPO },
-        meio: { value: CEU_MEIO },
-        horizonte: { value: CEU_HORIZONTE },
-        corSol: { value: CEU_SOL },
+        topo: { value: CEU_TOPO.clone() },
+        meio: { value: CEU_MEIO.clone() },
+        horizonte: { value: CEU_HORIZONTE.clone() },
+        corSol: { value: CEU_SOL.clone() },
         dirSol: { value: new THREE.Vector3(-0.35, 0.18, -1).normalize() },
       },
       vertexShader: `
@@ -405,6 +421,9 @@ export class Mundo {
     this.proxObstaculo = 1.5;
     this.proxEstrela = 1;
     this.invencivel = 0;
+    this.chuva = 0;
+    this.chuvaAlvo = 0;
+    this.relampago = 0;
     this.alvo.set(0, Y_CENTRO);
     this.aviao.position.set(0, Y_CENTRO, 0);
     this.aviao.rotation.set(0, 0, 0);
@@ -491,8 +510,95 @@ export class Mundo {
       this.aviao.visible = true;
     }
 
+    this._atualizarClima(dt, emMovimento);
     this.ceu.position.copy(this.camera.position);
     this.renderer.render(this.cena, this.camera);
+  }
+
+  // ───────────── Chuva e tempestade ─────────────
+  /** Intensidade da chuva: 0 (céu limpo) a 1 (tempestade). Muda aos poucos. */
+  definirChuva(intensidade) {
+    this.chuvaAlvo = THREE.MathUtils.clamp(intensidade, 0, 1);
+  }
+
+  _criarChuva() {
+    this.gotas = new Float32Array(NUM_GOTAS * 3);
+    for (let i = 0; i < NUM_GOTAS; i++) {
+      this.gotas[i * 3] = rnd(-24, 24);
+      this.gotas[i * 3 + 1] = rnd(-6, 28);
+      this.gotas[i * 3 + 2] = rnd(-90, 30);
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(NUM_GOTAS * 6), 3));
+    geo.setDrawRange(0, 0);
+    this.malhaChuva = new THREE.LineSegments(geo, new THREE.LineBasicMaterial({
+      color: 0xd6e4f2, transparent: true, opacity: 0.55, depthWrite: false, fog: false,
+    }));
+    this.malhaChuva.frustumCulled = false;
+    this.cena.add(this.malhaChuva);
+  }
+
+  _atualizarClima(dt, emMovimento) {
+    this.chuva += (this.chuvaAlvo - this.chuva) * (1 - Math.exp(-dt * 0.7));
+    const c = this.chuva;
+
+    // Relâmpagos na tempestade forte
+    if (this.chuvaAlvo >= 0.7 && this.modo === 'jogo' && emMovimento) {
+      this.proxRelampago -= dt;
+      if (this.proxRelampago <= 0) {
+        this.relampago = 1;
+        this.proxRelampago = rnd(5, 10);
+        this.aoRelampago?.();
+      }
+    }
+    this.relampago = Math.max(0, this.relampago - dt * 2.8);
+    const clarao = this.relampago > 0 ? this.relampago * (0.55 + 0.45 * Math.sin(this.relogio * 70)) : 0;
+
+    // Céu, neblina e luzes escurecem com a chuva
+    const u = this.ceu.material.uniforms;
+    const k = c * 0.88;
+    u.topo.value.copy(CEU_TOPO).lerp(TEMP_TOPO, k).lerp(BRANCO, clarao * 0.5);
+    u.meio.value.copy(CEU_MEIO).lerp(TEMP_MEIO, k).lerp(BRANCO, clarao * 0.5);
+    u.horizonte.value.copy(CEU_HORIZONTE).lerp(TEMP_HORIZONTE, k).lerp(BRANCO, clarao * 0.4);
+    u.corSol.value.copy(CEU_SOL).lerp(u.horizonte.value, k);
+    this.cena.fog.color.copy(u.horizonte.value);
+    if (this.neblinaBase) {
+      this.cena.fog.near = this.neblinaBase.perto - c * 25;
+      this.cena.fog.far = this.neblinaBase.longe - c * 55;
+    }
+    // Nuvens decorativas ficam cinzas na tempestade
+    this.mat.nuvem.color.copy(BRANCO).lerp(TEMP_HORIZONTE, k * 0.85).lerp(BRANCO, clarao * 0.6);
+    this.mat.nuvem.emissiveIntensity = 0.12 * (1 - k) + clarao * 0.5;
+    this.luzCeu.intensity = 1.5 - c * 0.55 + clarao * 2.5;
+    this.sol.intensity = 2.4 - c * 1.6 + clarao * 1.5;
+
+    // Gotas: caem sempre; com o avião voando, também vêm na direção da câmera
+    const visiveis = Math.floor(NUM_GOTAS * Math.min(1, c * 1.15));
+    const geo = this.malhaChuva.geometry;
+    geo.setDrawRange(0, visiveis * 2);
+    this.malhaChuva.visible = visiveis > 0;
+    if (!visiveis) return;
+    this.malhaChuva.material.opacity = 0.35 + c * 0.3;
+    const cam = this.camera.position;
+    const vy = 36 * dt;
+    const vz = (emMovimento && this.modo !== 'menu' ? this.velocidade * 0.8 : 0) * dt;
+    const inclinar = emMovimento ? 0.35 : 0.08;
+    const pos = geo.attributes.position.array;
+    const g = this.gotas;
+    for (let i = 0; i < visiveis; i++) {
+      const j = i * 3;
+      g[j + 1] -= vy;
+      g[j + 2] += vz;
+      if (g[j + 1] < -6) g[j + 1] += 34;
+      if (g[j + 2] > 30) g[j + 2] -= 120;
+      const x = cam.x + g[j];
+      const y = g[j + 1];
+      const z = cam.z - 30 + g[j + 2];
+      const o = i * 6;
+      pos[o] = x; pos[o + 1] = y; pos[o + 2] = z;
+      pos[o + 3] = x; pos[o + 4] = y + 1.3; pos[o + 5] = z - 1.3 * inclinar;
+    }
+    geo.attributes.position.needsUpdate = true;
   }
 
   _rolarCenario(dt, vel) {
@@ -639,8 +745,9 @@ export class Mundo {
     const meiaLargura = this.xMax + 2.0;
     const tanMeio = Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2));
     this.distCamera = THREE.MathUtils.clamp(meiaLargura / (tanMeio * this.aspecto) * 0.9, 9, 26);
-    this.cena.fog.near = this.distCamera + 40;
-    this.cena.fog.far = this.distCamera + 185;
+    this.neblinaBase = { perto: this.distCamera + 40, longe: this.distCamera + 185 };
+    this.cena.fog.near = this.neblinaBase.perto;
+    this.cena.fog.far = this.neblinaBase.longe;
     this.camera.updateProjectionMatrix();
     if (this.camera.position.lengthSq() === 0) this.camera.position.set(0, Y_CENTRO + 2, 10);
   }

@@ -6,7 +6,7 @@ import { perguntar, mostrarRetorno, fecharPergunta, embaralhar } from './quiz.js
 import { prepararSQL } from './tabela.js';
 import { rankingAtivo, enviarPontuacao, buscarRanking, guardarPendente, enviarPendentes } from './ranking.js';
 import { nomeImproprio } from './filtro.js';
-import { som, iniciarAudio, alternarSom, estaMudo, motorLigado, motorVelocidade, vibrar } from './audio.js';
+import { som, iniciarAudio, alternarSom, estaMudo, motorLigado, motorVelocidade, vibrar, chuvaVolume, trovao } from './audio.js';
 
 const $ = (id) => document.getElementById(id);
 const armazenamento = {
@@ -162,6 +162,7 @@ function novaPartida(modo = 'jogo', temaTreino = null) {
   setTimeout(() => $('dica-arraste').classList.add('sumiu'), 3500);
   atualizarHUD();
   mundo.iniciarJogo(!treino);
+  chuvaVolume(0);
   motorLigado(true);
   fase = 'contagem';
   contagem().then(() => { fase = 'voo'; });
@@ -219,6 +220,7 @@ async function abrirPergunta() {
     if (estado.treino) finalizarTreino(); else finalizar(estado.vidas > 0);
     return;
   }
+  atualizarClima(estado.respondidas + 1);
   const intervalo = estado.treino ? CONFIG.treino.intervalo : CONFIG.intervaloPerguntas;
   estado.tempoEntre = intervalo;
   estado.proximaEm = intervalo;
@@ -228,6 +230,31 @@ async function abrirPergunta() {
   await contagem();
   if (fase === 'contagem') fase = 'voo';
 }
+
+// ───────────── Clima: chuva a partir da pergunta 5 ─────────────
+function intensidadeChuva(numeroPergunta) {
+  const { aPartirDaPergunta, tempestadeNaPergunta } = CONFIG.chuva;
+  if (numeroPergunta < aPartirDaPergunta) return 0;
+  // começa fraca (0,3), chega a 0,7 na tempestade e a 1 no fim
+  const ate = (numeroPergunta - aPartirDaPergunta) / Math.max(1, tempestadeNaPergunta - aPartirDaPergunta);
+  return Math.min(1, 0.3 + ate * 0.4 + Math.max(0, numeroPergunta - tempestadeNaPergunta) * 0.075);
+}
+
+function atualizarClima(numeroPergunta) {
+  if (estado.treino || !CONFIG.chuva.ativa) return;
+  const i = intensidadeChuva(numeroPergunta);
+  const antes = estado.chuva || 0;
+  estado.chuva = i;
+  mundo.definirChuva(i);
+  chuvaVolume(i);
+  if (antes === 0 && i > 0) setTimeout(() => aviso('🌧️ Começou a chover!', 'aviso-clima'), 900);
+  else if (antes < 0.7 && i >= 0.7) setTimeout(() => aviso('⛈️ Tempestade! Cuidado!', 'aviso-clima'), 900);
+}
+
+mundo.aoRelampago = () => {
+  setTimeout(trovao, 250 + Math.random() * 900);
+  vibrar(40);
+};
 
 function contagem() {
   const el = $('contagem');
@@ -307,7 +334,7 @@ function aviso(texto, classe) {
   el.className = `aviso ${classe}`;
   el.textContent = texto;
   $('avisos').appendChild(el);
-  setTimeout(() => el.remove(), 1200);
+  setTimeout(() => el.remove(), classe === 'aviso-clima' ? 2100 : 1200);
 }
 
 function confete() {
@@ -361,6 +388,7 @@ $('btn-som').addEventListener('click', () => { iniciarAudio(); alternarSom(); de
 function finalizar(completou) {
   fase = 'fim';
   motorLigado(false);
+  chuvaVolume(0);
   $('hud').hidden = true;
   const bonusDistancia = Math.floor(mundo.distancia / CONFIG.pontos.metrosPorPonto);
   const pontosPerguntas = estado.pontos - estado.estrelas * CONFIG.pontos.estrela;
@@ -509,6 +537,7 @@ $('btn-atualizar-ranking').addEventListener('click', () => { som.clique(); abrir
 function finalizarTreino() {
   fase = 'fim';
   motorLigado(false);
+  chuvaVolume(0);
   $('hud').hidden = true;
   const total = estado.perguntas.length;
   const tema = TEMAS.find((t) => t.id === estado.temaTreino);
@@ -546,6 +575,7 @@ function animarNumero(el, alvo) {
 function irParaInicio() {
   fase = 'menu';
   motorLigado(false);
+  chuvaVolume(0);
   $('hud').hidden = true;
   $('contagem').hidden = true;
   mundo.voltarAoMenu();
