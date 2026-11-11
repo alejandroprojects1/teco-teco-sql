@@ -1,6 +1,7 @@
 // Mundo 3D: céu, terreno, nuvens, obstáculos, estrelas, câmera e colisões.
 import * as THREE from '../vendor/three.module.min.js';
 import { criarAviao } from './aviao.js';
+import { pinheiro, frondosa, ipe, tufoDeGrama, flor, pedra, corDoGramado } from './vegetacao.js';
 
 const CHAO_Y = -16;
 const TRECHO = 160; // comprimento de cada pedaço de terreno
@@ -140,9 +141,9 @@ export class Mundo {
 
   _criarTerreno() {
     this.trechos = [];
-    const cores = [0x8ccf6c, 0x76c062, 0x62ad57, 0x529b4f, 0xc8b47c].map((c) => new THREE.Color(c));
+    // Chão: malha com relevo e manchas de grama em vários tons
     const largura = 360;
-    const base = new THREE.PlaneGeometry(largura, TRECHO, 60, 28);
+    const base = new THREE.PlaneGeometry(largura, TRECHO, 90, 44);
     base.rotateX(-Math.PI / 2);
     const pos = base.attributes.position;
     for (let i = 0; i < pos.count; i++) {
@@ -153,45 +154,71 @@ export class Mundo {
     const cor = new Float32Array(p.count * 3);
     const c = new THREE.Color();
     for (let i = 0; i < p.count; i += 3) {
+      const x = (p.getX(i) + p.getX(i + 1) + p.getX(i + 2)) / 3;
       const h = (p.getY(i) + p.getY(i + 1) + p.getY(i + 2)) / 3;
-      const idx = h > 7 ? 4 : h > 3.2 ? 3 : h > 0.5 ? 2 : h > -2.5 ? 1 : 0;
-      c.copy(cores[idx]).offsetHSL(rnd(-0.012, 0.012), 0, rnd(-0.03, 0.03));
+      const z = (p.getZ(i) + p.getZ(i + 1) + p.getZ(i + 2)) / 3;
+      corDoGramado(x, z, h, TRECHO, c);
       for (let j = 0; j < 3; j++) c.toArray(cor, (i + j) * 3);
     }
     geo.setAttribute('color', new THREE.BufferAttribute(cor, 3));
     geo.computeVertexNormals();
     const matChao = new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 1 });
+    const matVeg = new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.9 });
+    const matGrama = new THREE.MeshStandardMaterial({ vertexColors: true, side: THREE.DoubleSide, roughness: 1 });
 
-    // Árvores (instanciadas)
-    const copa = new THREE.ConeGeometry(1.7, 4.2, 7);
-    copa.translate(0, 3.2, 0);
-    const tronco = new THREE.CylinderGeometry(0.3, 0.42, 1.4, 6);
-    tronco.translate(0, 0.7, 0);
-    const matCopa = MAT(0xffffff);
-    const matTronco = MAT(0x8a5a33);
-    const coresCopa = [0x3f8f4a, 0x4fa152, 0x2f7a43, 0x6fb35a].map((x) => new THREE.Color(x));
+    // 3 tipos de árvore (o ipê aparece em amarelo e em rosa)
+    const ARVORES = [
+      { geo: pinheiro(), quantos: 44, escala: [0.75, 1.35] },
+      { geo: frondosa(), quantos: 40, escala: [0.75, 1.25] },
+      { geo: ipe(0xf6c42b, 0xffdb5c), quantos: 12, escala: [0.8, 1.2] },
+      { geo: ipe(0xe46aa8, 0xf497c6), quantos: 10, escala: [0.8, 1.2] },
+    ];
+    const CHAO = [
+      { geo: tufoDeGrama(), quantos: 2000, mat: matGrama, faixa: [0, 75], escala: [0.8, 1.6] },
+      { geo: flor(), quantos: 450, mat: matVeg, faixa: [0, 70], escala: [0.9, 1.5], cores: [0xffffff, 0xffe066, 0xff8fb8, 0xc9a7ff, 0xff9f6b] },
+      { geo: pedra(), quantos: 16, mat: matVeg, faixa: [8, 90], escala: [0.6, 1.6], afundar: 0.25 },
+    ];
+
+    const m4 = new THREE.Matrix4();
+    const q = new THREE.Quaternion();
+    const s = new THREE.Vector3();
+    const eixoY = new THREE.Vector3(0, 1, 0);
+    const cInst = new THREE.Color();
+    const posicionar = (malha, i, x, z, esc, esticar = 1, afundar = 0.2) => {
+      q.setFromAxisAngle(eixoY, rnd(0, Math.PI * 2));
+      s.set(esc, esc * esticar, esc);
+      m4.compose(new THREE.Vector3(x, alturaTerreno(x, z) - afundar, z), q, s);
+      malha.setMatrixAt(i, m4);
+    };
 
     for (let t = 0; t < NUM_TRECHOS; t++) {
       const grupo = new THREE.Group();
       grupo.add(new THREE.Mesh(geo, matChao));
-      const n = 90;
-      const copas = new THREE.InstancedMesh(copa, matCopa, n);
-      const troncos = new THREE.InstancedMesh(tronco, matTronco, n);
-      const m4 = new THREE.Matrix4();
-      const q = new THREE.Quaternion();
-      const s = new THREE.Vector3();
-      for (let i = 0; i < n; i++) {
-        const x = (Math.random() < 0.5 ? -1 : 1) * rnd(6, 120);
-        const z = rnd(-TRECHO / 2, TRECHO / 2);
-        const esc = rnd(0.7, 1.5);
-        q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), rnd(0, Math.PI));
-        s.set(esc, esc * rnd(0.9, 1.3), esc);
-        m4.compose(new THREE.Vector3(x, alturaTerreno(x, z) - 0.2, z), q, s);
-        copas.setMatrixAt(i, m4);
-        troncos.setMatrixAt(i, m4);
-        copas.setColorAt(i, escolher(coresCopa));
+
+      for (const tipo of ARVORES) {
+        const malha = new THREE.InstancedMesh(tipo.geo, matVeg, tipo.quantos);
+        for (let i = 0; i < tipo.quantos; i++) {
+          const x = (Math.random() < 0.5 ? -1 : 1) * rnd(6, 125);
+          const z = rnd(-TRECHO / 2, TRECHO / 2);
+          posicionar(malha, i, x, z, rnd(...tipo.escala), rnd(0.9, 1.15));
+          const v = rnd(0.88, 1.1);
+          malha.setColorAt(i, cInst.setRGB(v, v, v));
+        }
+        grupo.add(malha);
       }
-      grupo.add(copas, troncos);
+
+      for (const tipo of CHAO) {
+        const malha = new THREE.InstancedMesh(tipo.geo, tipo.mat, tipo.quantos);
+        for (let i = 0; i < tipo.quantos; i++) {
+          const x = (Math.random() < 0.5 ? -1 : 1) * rnd(...tipo.faixa);
+          const z = rnd(-TRECHO / 2, TRECHO / 2);
+          posicionar(malha, i, x, z, rnd(...tipo.escala), 1, tipo.afundar ?? 0.08);
+          if (tipo.cores) malha.setColorAt(i, cInst.set(tipo.cores[Math.floor(Math.random() * tipo.cores.length)]));
+          else { const v = rnd(0.85, 1.12); malha.setColorAt(i, cInst.setRGB(v, v, v)); }
+        }
+        grupo.add(malha);
+      }
+
       grupo.position.set(0, CHAO_Y, -t * TRECHO + 40);
       this.cena.add(grupo);
       this.trechos.push(grupo);

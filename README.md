@@ -100,6 +100,7 @@ css/estilo.css      Visual
 js/main.js          Telas, regras da partida, pontuação e controles
 js/mundo.js         Cenário 3D, obstáculos, câmera e colisões
 js/aviao.js         O teco-teco em 3D (modelo feito em código)
+js/vegetacao.js     Árvores (pinheiro, frondosa e ipê), grama, flores e pedras
 js/quiz.js          Painel de perguntas
 js/tabela.js        Executa o SQL (SQLite no navegador) e desenha a tabela
 js/perguntas.js     Banco de perguntas
