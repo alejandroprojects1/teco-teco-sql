@@ -106,6 +106,7 @@ js/main.js          Telas, regras da partida, pontuação e controles
 js/mundo.js         Cenário 3D, obstáculos, câmera e colisões
 js/aviao.js         O teco-teco em 3D (modelo feito em código)
 js/texturas-aviao.js Texturas do avião (madeira, tecido, metal e pneu), desenhadas em código
+js/texturas-obstaculos.js Texturas dos obstáculos (blocos, telhas, balões, cesto e nuvens)
 js/vegetacao.js     Árvores (pinheiro, frondosa e ipê), grama, flores e pedras
 js/quiz.js          Painel de perguntas
 js/tabela.js        Executa o SQL (SQLite no navegador) e desenha a tabela

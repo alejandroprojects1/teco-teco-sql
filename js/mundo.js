@@ -1,6 +1,7 @@
 // Mundo 3D: céu, terreno, nuvens, obstáculos, estrelas, câmera e colisões.
 import * as THREE from '../vendor/three.module.min.js';
 import { criarAviao } from './aviao.js';
+import { texturasDosBlocos, texturaDoTelhado, texturasDosBaloes, texturaDoCesto, texturaDaTempestade } from './texturas-obstaculos.js';
 import { pinheiro, frondosa, ipe, tufoDeGrama, flor, pedra, corDoGramado } from './vegetacao.js';
 
 const CHAO_Y = -16;
@@ -232,13 +233,18 @@ export class Mundo {
       telhado: new THREE.ConeGeometry(1.2, 1.3, 4),
       cesto: new THREE.CylinderGeometry(0.32, 0.26, 0.4, 8),
     };
+    // Texturas dos obstáculos (desenhadas em código)
+    const txBlocos = texturasDosBlocos();
     this.mat = {
       nuvem: MAT(0xffffff, { roughness: 1, emissive: 0xffffff, emissiveIntensity: 0.12 }),
-      tempestade: MAT(0x5d6679, { roughness: 1 }),
+      tempestade: MAT(0xffffff, { roughness: 1, ...texturaDaTempestade() }),
       raio: new THREE.MeshBasicMaterial({ color: 0xffe066 }),
-      cesto: MAT(0x9a6232),
-      blocos: [0xe4513f, 0xf4b63d, 0x3d8fe0, 0x45b36b, 0x9b6ad6].map((c) => MAT(c, { roughness: 0.6 })),
-      telhado: MAT(0xd5473b),
+      cesto: MAT(0xffffff, { ...texturaDoCesto(), bumpScale: 1.5 }),
+      // blocos[cor][símbolo]: cada bloco tem uma cor e um símbolo gravado
+      blocos: [0xe4513f, 0xf4b63d, 0x3d8fe0, 0x45b36b, 0x9b6ad6].map(
+        (c) => txBlocos.map((tx) => MAT(c, { roughness: 0.55, ...tx, bumpScale: 2.5 })),
+      ),
+      telhado: MAT(0xffffff, { ...texturaDoTelhado(), bumpScale: 2 }),
       estrela: new THREE.MeshStandardMaterial({
         color: 0xffd23f, emissive: 0xffb300, emissiveIntensity: 0.55, flatShading: true, roughness: 0.35, metalness: 0.3,
       }),
@@ -258,9 +264,12 @@ export class Mundo {
     const lathe = new THREE.LatheGeometry(perfil, 12).toNonIndexed();
     lathe.computeVertexNormals();
     this.geoBalao = lathe;
-    this.paletasBalao = [
+    const paletasBalao = [
       [0xff6b6b, 0xfff1d6], [0x4dabf7, 0xffe066], [0x9775fa, 0xffffff], [0x38d9a9, 0xff922b], [0xf783ac, 0xfff3bf],
     ];
+    this.mat.baloes = texturasDosBaloes(paletasBalao).map(
+      (tx) => new THREE.MeshStandardMaterial({ ...tx, bumpScale: 2, flatShading: true, roughness: 0.6 }),
+    );
 
     // Estrela de 5 pontas
     const f = new THREE.Shape();
@@ -279,14 +288,14 @@ export class Mundo {
     this.geoRaio = new THREE.ExtrudeGeometry(r, { depth: 0.05, bevelEnabled: false });
   }
 
-  _nuvem(material, n, raio) {
+  _nuvem(material, n, raio, soGirarDeLado = false) {
     const g = new THREE.Group();
     for (let i = 0; i < n; i++) {
       const b = new THREE.Mesh(this.geo.bolha, material);
       const s = raio * rnd(0.55, 1);
       b.scale.set(s, s * rnd(0.75, 0.95), s);
       b.position.set(rnd(-raio, raio) * 0.9, rnd(-raio, raio) * 0.25, rnd(-raio, raio) * 0.5);
-      b.rotation.set(rnd(0, 3), rnd(0, 3), 0);
+      b.rotation.set(soGirarDeLado ? 0 : rnd(0, 3), rnd(0, 3), 0);
       g.add(b);
     }
     return g;
@@ -314,7 +323,7 @@ export class Mundo {
 
   // ───────────── Obstáculos e estrelas ─────────────
   _criarTempestade() {
-    const g = this._nuvem(this.mat.tempestade, 6, 1.35);
+    const g = this._nuvem(this.mat.tempestade, 6, 1.35, true);
     const raio = new THREE.Mesh(this.geoRaio, this.mat.raio);
     raio.position.set(0, -1.3, 0.4);
     raio.scale.setScalar(0.9);
@@ -324,22 +333,7 @@ export class Mundo {
 
   _criarBalao() {
     const g = new THREE.Group();
-    const [c1, c2] = escolher(this.paletasBalao);
-    const geo = this.geoBalao.clone();
-    const pos = geo.attributes.position;
-    const cores = new Float32Array(pos.count * 3);
-    const ca = new THREE.Color(c1), cb = new THREE.Color(c2);
-    for (let i = 0; i < pos.count; i += 3) {
-      const ang = Math.atan2(
-        (pos.getZ(i) + pos.getZ(i + 1) + pos.getZ(i + 2)) / 3,
-        (pos.getX(i) + pos.getX(i + 1) + pos.getX(i + 2)) / 3,
-      );
-      const gomo = Math.floor(((ang + Math.PI) / (Math.PI * 2)) * 12) % 2;
-      const c = gomo ? ca : cb;
-      for (let j = 0; j < 3; j++) c.toArray(cores, (i + j) * 3);
-    }
-    geo.setAttribute('color', new THREE.BufferAttribute(cores, 3));
-    const balao = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.6 }));
+    const balao = new THREE.Mesh(this.geoBalao, escolher(this.mat.baloes));
     g.add(balao);
     const cesto = new THREE.Mesh(this.geo.cesto, this.mat.cesto);
     cesto.position.y = -1.75;
@@ -350,7 +344,7 @@ export class Mundo {
     cordas.setAttribute('position', new THREE.Float32BufferAttribute(p, 3));
     g.add(new THREE.LineSegments(cordas, new THREE.LineBasicMaterial({ color: 0x5b3b22 })));
     g.rotation.y = rnd(0, Math.PI);
-    return { obj: g, tipo: 'balao', raio: 1.25, fase: rnd(0, 6), geoPropria: geo };
+    return { obj: g, tipo: 'balao', raio: 1.25, fase: rnd(0, 6) };
   }
 
   _criarTorre(topoY) {
@@ -359,7 +353,7 @@ export class Mundo {
     let y = topoY - lado / 2;
     let i = Math.floor(rnd(0, 5));
     while (y > CHAO_Y - 4) {
-      const b = new THREE.Mesh(this.geo.bloco, this.mat.blocos[i % this.mat.blocos.length]);
+      const b = new THREE.Mesh(this.geo.bloco, escolher(this.mat.blocos[i % this.mat.blocos.length]));
       b.position.y = y;
       b.rotation.y = rnd(-0.12, 0.12);
       g.add(b);
@@ -405,7 +399,6 @@ export class Mundo {
 
   _removerObstaculo(o) {
     this.cena.remove(o.obj);
-    if (o.geoPropria) o.geoPropria.dispose();
   }
 
   _explosao(pos, material, n, forca, escala) {

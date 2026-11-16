@@ -4,7 +4,7 @@
 import * as THREE from '../vendor/three.module.min.js';
 
 // Sorteio com semente fixa: o avião fica igual toda vez que o jogo abre
-function sorteador(semente) {
+export function sorteador(semente) {
   let a = semente;
   return () => {
     a |= 0; a = (a + 0x6d2b79f5) | 0;
@@ -14,14 +14,14 @@ function sorteador(semente) {
   };
 }
 
-function tela(largura, altura) {
+export function tela(largura, altura) {
   const c = document.createElement('canvas');
   c.width = largura;
   c.height = altura;
   return [c, c.getContext('2d')];
 }
 
-function paraTextura(canvas, { cor = true, repetir = [1, 1], deslocar = [0, 0] } = {}) {
+export function paraTextura(canvas, { cor = true, repetir = [1, 1], deslocar = [0, 0] } = {}) {
   const t = new THREE.CanvasTexture(canvas);
   if (cor) t.colorSpace = THREE.SRGBColorSpace;
   t.wrapS = THREE.RepeatWrapping;
