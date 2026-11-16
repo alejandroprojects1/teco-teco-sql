@@ -27,6 +27,7 @@
   --t-select: #3b82f6;
   --t-where: #f59e0b;
   --t-update: #ec4899;
+  --t-delete: #5b6b82;
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -350,6 +351,7 @@ code {
 .tema-select { --tema: var(--t-select); }
 .tema-where { --tema: var(--t-where); }
 .tema-update { --tema: var(--t-update); }
+.tema-delete { --tema: var(--t-delete); }
 
 .pq-topo { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .chip-tema {
@@ -562,7 +564,7 @@ code {
 .res-stats div { background: #fff; border-radius: 16px; padding: 7px 4px; display: flex; flex-direction: column; box-shadow: inset 0 0 0 2px #f1e3d1; }
 .res-stats strong { font-size: 20px; }
 .res-stats span { font-size: 13px; color: var(--tinta-2); font-weight: 500; }
-.res-temas { width: 100%; display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin: 6px 0; }
+.res-temas { width: 100%; display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; margin: 6px 0; }
 .res-tema { display: flex; flex-direction: column; align-items: center; gap: 7px; background: #fff; border-radius: 12px; padding: 7px 2px 9px; box-shadow: inset 0 0 0 2px #f1e3d1; }
 .bolinhas { display: flex; gap: 4px; }
 .res-tema .chip-tema { font-size: 10px; padding: 3px 5px; border-radius: 6px; }
@@ -812,3 +814,14 @@ code {
 }
 #tela-inicio .logo { margin-top: max(4vh, 52px); }
 @media (max-height: 640px) { #tela-inicio .logo { margin-top: 48px; } }
+
+/* Tema DELETE: linhas e tabelas apagadas na demonstração */
+.res-tema .chip-tema { font-size: 9px; padding: 3px 3px; letter-spacing: 0; }
+.res-tema .bolinhas { gap: 3px; }
+.demo-tabela tr.apagada td { background: var(--erro-claro) !important; color: #b4282d; text-decoration: line-through; text-decoration-thickness: 2px; }
+.demo-tabela tr.apagada td:first-child { box-shadow: inset 4px 0 0 var(--erro); }
+.tabela-apagada { box-shadow: 0 0 0 2px var(--erro); }
+.tabela-apagada .demo-nome-tabela { background: var(--erro); text-decoration: line-through; }
+.tabela-apagada .demo-nome-tabela em { display: inline-block; text-decoration: none; font-style: normal; font-family: var(--fonte); font-weight: 600; margin-left: 6px; background: rgba(255, 255, 255, 0.25); padding: 0 6px; border-radius: 6px; }
+.tabela-apagada .demo-tabela th { background: #c9ccd2; color: #6d7480; text-decoration: line-through; }
+.tabela-apagada .demo-tabela td { color: #a0a6b0; text-decoration: line-through; background: #f6f6f7 !important; }

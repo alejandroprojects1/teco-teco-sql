@@ -1,7 +1,7 @@
 // Banco de perguntas do Teco-Teco SQL
 //
 // Cada pergunta tem:
-//   tema:       'create' | 'insert' | 'select' | 'where' | 'update'
+//   tema:       'create' | 'insert' | 'select' | 'where' | 'update' | 'delete'
 //   tipo:       'vf' (verdadeiro ou falso) | 'escolha' (múltipla escolha) | 'montar' (montar o comando)
 //   pergunta:   texto da pergunta. Trechos entre `crases` aparecem como código.
 //   explicacao: mostrada depois que o aluno responde.
@@ -17,7 +17,7 @@
 //   Se faltar, o jogo usa a resposta certa (montar) ou a alternativa certa (quando é um comando).
 //   As tabelas de exemplo estão em js/tabela.js: alunos, pets, livros.
 //
-// Em cada partida o jogo sorteia, para cada tema, 1 pergunta de cada tipo.
+// Cada partida tem 15 perguntas, na ordem dos temas: 2 ou 3 de cada tema, de tipos diferentes.
 
 export const TEMAS = [
   { id: 'create', nome: 'CREATE TABLE', descricao: 'Criar tabelas' },
@@ -25,6 +25,7 @@ export const TEMAS = [
   { id: 'select', nome: 'SELECT', descricao: 'Consultar dados' },
   { id: 'where', nome: 'WHERE', descricao: 'Filtrar resultados' },
   { id: 'update', nome: 'UPDATE', descricao: 'Alterar dados' },
+  { id: 'delete', nome: 'DELETE', descricao: 'Apagar linhas e tabelas' },
 ];
 
 export const PERGUNTAS = [
@@ -489,5 +490,96 @@ export const PERGUNTAS = [
     pecas: ['UPDATE', 'livros', 'SET', 'paginas = 256', 'WHERE', "titulo = 'Dom Casmurro';"],
     extras: ['FROM', 'paginas > 256'],
     explicacao: 'No `SET` usamos `=` para dar o novo valor. O `WHERE` escolhe o livro.',
+  },
+
+  // ───────────────────────── DELETE (e DROP TABLE) ─────────────────────────
+  {
+    tema: 'delete', tipo: 'vf',
+    pergunta: 'O comando `DELETE FROM` serve para apagar linhas de uma tabela.',
+    exemplo: "DELETE FROM alunos WHERE nome = 'Caio';",
+    resposta: true,
+    explicacao: '`DELETE FROM` apaga linhas (registros). O `WHERE` escolhe quais linhas serão apagadas.',
+  },
+  {
+    tema: 'delete', tipo: 'vf',
+    pergunta: 'Um `DELETE FROM` sem `WHERE` apaga todas as linhas da tabela.',
+    exemplo: "DELETE FROM pets;",
+    resposta: true,
+    explicacao: 'Cuidado! Sem `WHERE`, o `DELETE` apaga TODAS as linhas. A tabela continua existindo, mas fica vazia.',
+  },
+  {
+    tema: 'delete', tipo: 'vf',
+    pergunta: 'Depois de `DELETE FROM pets;` a tabela `pets` deixa de existir.',
+    exemplo: "DELETE FROM pets;",
+    resposta: false,
+    explicacao: 'O `DELETE` apaga só as linhas: a tabela continua lá, vazia. Para apagar a tabela inteira usamos `DROP TABLE`.',
+  },
+  {
+    tema: 'delete', tipo: 'vf',
+    pergunta: 'O comando `DROP TABLE` apaga a tabela inteira: as colunas e todas as linhas.',
+    exemplo: "DROP TABLE pets;",
+    resposta: true,
+    explicacao: '`DROP TABLE` faz a tabela deixar de existir, com tudo o que tinha dentro.',
+  },
+  {
+    tema: 'delete', tipo: 'escolha',
+    pergunta: 'Qual comando apaga só o aluno Caio da tabela `alunos`?',
+    alternativas: [
+      "DELETE FROM alunos WHERE nome = 'Caio';",
+      'DELETE FROM alunos;',
+      'DROP TABLE alunos;',
+      "DELETE alunos WHERE nome = 'Caio';",
+    ],
+    correta: 0, codigo: true,
+    explicacao: 'A ordem é `DELETE FROM tabela WHERE condição`. Sem o `WHERE`, todos os alunos seriam apagados.',
+  },
+  {
+    tema: 'delete', tipo: 'escolha',
+    pergunta: 'Qual comando apaga a tabela `pets` inteira, fazendo ela deixar de existir?',
+    alternativas: ['DROP TABLE pets;', 'DELETE FROM pets;', 'DELETE TABLE pets;', 'DROP pets;'],
+    correta: 0, codigo: true,
+    explicacao: 'Para apagar a tabela inteira usamos `DROP TABLE`. O `DELETE FROM pets;` só esvaziaria a tabela.',
+  },
+  {
+    tema: 'delete', tipo: 'escolha',
+    pergunta: 'A tabela `pets` tem: Rex (3 anos), Mia (5 anos) e Bob (8 anos). Quantas linhas sobram depois de `DELETE FROM pets WHERE idade > 4;`?',
+    exemplo: "DELETE FROM pets WHERE idade > 4;",
+    alternativas: ['1', '2', '3', '0'],
+    correta: 0,
+    explicacao: 'Mia (5) e Bob (8) têm mais de 4 anos e são apagados. Sobra só o Rex.',
+  },
+  {
+    tema: 'delete', tipo: 'escolha',
+    pergunta: 'Qual é a diferença entre `DELETE FROM pets;` e `DROP TABLE pets;`?',
+    exemplo: "DROP TABLE pets;",
+    alternativas: [
+      'DELETE apaga as linhas e a tabela continua; DROP apaga a tabela inteira',
+      'Nenhuma: os dois fazem a mesma coisa',
+      'DELETE apaga a tabela inteira; DROP apaga só uma linha',
+      'DROP apaga só as colunas e mantém as linhas',
+    ],
+    correta: 0,
+    explicacao: '`DELETE` mexe nas linhas. `DROP TABLE` acaba com a tabela inteira.',
+  },
+  {
+    tema: 'delete', tipo: 'montar',
+    pergunta: 'Monte o comando que apaga o aluno Pedro da tabela `alunos`.',
+    pecas: ['DELETE FROM', 'alunos', 'WHERE', "nome = 'Pedro';"],
+    extras: ['DROP TABLE', 'SET'],
+    explicacao: '`DELETE FROM` apaga linhas, e o `WHERE` garante que só o Pedro seja apagado.',
+  },
+  {
+    tema: 'delete', tipo: 'montar',
+    pergunta: 'Monte o comando que apaga os livros com menos de 100 páginas.',
+    pecas: ['DELETE FROM', 'livros', 'WHERE', 'paginas < 100;'],
+    extras: ['VALUES', 'paginas > 100;'],
+    explicacao: '"Menos de 100" é `< 100`. Só as linhas que obedecem ao `WHERE` são apagadas.',
+  },
+  {
+    tema: 'delete', tipo: 'montar',
+    pergunta: 'Monte o comando que apaga a tabela `pets` inteira.',
+    pecas: ['DROP TABLE', 'pets;'],
+    extras: ['DELETE FROM', 'WHERE', '*'],
+    explicacao: 'Para a tabela deixar de existir usamos `DROP TABLE`, e não `DELETE`.',
   },
 ];

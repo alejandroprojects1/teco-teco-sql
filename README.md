@@ -29,7 +29,7 @@ Na tela inicial, toque em **Modo treino** e escolha um tema (ou "Todos os temas"
 
 ## Conteúdo
 
-Cada partida tem **15 perguntas**: 3 de cada tema, na ordem abaixo, sorteadas de um banco com 55 perguntas.
+Cada partida tem **15 perguntas**: 2 ou 3 de cada tema (sorteado a cada partida), na ordem abaixo, tiradas de um banco com 66 perguntas (11 por tema).
 
 | Tema | O que o aluno pratica |
 |---|---|
@@ -38,6 +38,7 @@ Cada partida tem **15 perguntas**: 3 de cada tema, na ordem abaixo, sorteadas de
 | `SELECT` | Consultar colunas com `FROM` e `*` |
 | `WHERE` | Filtrar linhas com `=`, `>` e `<` |
 | `UPDATE` | Alterar dados com `SET` e `WHERE` |
+| `DELETE` | Apagar linhas com `DELETE FROM ... WHERE` e apagar a tabela inteira com `DROP TABLE` |
 
 Tipos de pergunta: **verdadeiro ou falso**, **múltipla escolha** e **montar o comando** (tocando nas peças na ordem certa).
 

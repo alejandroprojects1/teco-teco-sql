@@ -97,6 +97,33 @@ export async function demonstrar(sql) {
       };
     }
 
+    if (tipo === 'DELETE') {
+      const tabela = comando.match(/DELETE\s+FROM\s+(\w+)/i)[1];
+      const antes = db.exec(`SELECT rowid, * FROM ${tabela}`)[0];
+      db.run(comando);
+      const sobraram = new Set((db.exec(`SELECT rowid FROM ${tabela}`)[0]?.values || []).map((l) => l[0]));
+      const apagadas = new Set();
+      antes.values.forEach((l, i) => { if (!sobraram.has(l[0])) apagadas.add(i); });
+      const n = apagadas.size;
+      const total = antes.values.length;
+      return {
+        tipo, tabela, colunas: antes.columns.slice(1), linhas: antes.values.map((l) => l.slice(1)), apagadas,
+        legenda: n === total && !/\bWHERE\b/i.test(comando)
+          ? `Sem <code>WHERE</code>: <b>todas as ${n} linhas</b> foram apagadas! A tabela <b>${esc(tabela)}</b> continua existindo, mas vazia.`
+          : `<b>${n} ${n === 1 ? 'linha foi apagada' : 'linhas foram apagadas'}</b> (riscada${n === 1 ? '' : 's'}). ${total - n === 1 ? 'Sobrou 1 linha' : `Sobraram ${total - n} linhas`}.`,
+      };
+    }
+
+    if (tipo === 'DROP') {
+      const tabela = comando.match(/DROP\s+TABLE\s+(\w+)/i)[1];
+      const antes = linhasDe(db.exec(`SELECT * FROM ${tabela}`));
+      db.run(comando);
+      return {
+        tipo, tabela, colunas: antes.colunas, linhas: antes.linhas, tabelaApagada: true,
+        legenda: `A tabela <b>${esc(tabela)}</b> <b>deixou de existir</b>: as colunas e as ${antes.linhas.length} linhas foram apagadas.`,
+      };
+    }
+
     // SELECT
     const tabela = (comando.match(/FROM\s+(\w+)/i) || [])[1];
     const total = tabela ? db.exec(`SELECT COUNT(*) FROM ${tabela}`)[0].values[0][0] : 0;
@@ -129,16 +156,17 @@ export function desenharDemonstracao(sql, r) {
         const texto = v === null ? '—' : esc(v);
         return `<td class="${typeof v === 'number' ? 'num' : ''}${alterada ? ' alterada' : ''}">${texto}</td>`;
       }).join('');
-      return `<tr class="${nova ? 'nova' : ''}${mudou ? ' mudou' : ''}" style="--i:${i}">${celulas}</tr>`;
+      const apagada = r.apagadas?.has(i);
+      return `<tr class="${nova ? 'nova' : ''}${mudou ? ' mudou' : ''}${apagada ? ' apagada' : ''}" style="--i:${i}">${celulas}</tr>`;
     }).join('');
   }
-  const icone = { CREATE: '🧱', INSERT: '➕', SELECT: '🔍', UPDATE: '✏️' }[r.tipo] || '▶️';
+  const icone = { CREATE: '🧱', INSERT: '➕', SELECT: '🔍', UPDATE: '✏️', DELETE: '🗑️', DROP: '💥' }[r.tipo] || '▶️';
   return `
     <div class="demo">
       <div class="demo-cabecalho"><span class="demo-icone">${icone}</span><span>Veja o comando funcionando</span></div>
       <code class="demo-sql">${esc(sql)}</code>
-      <div class="demo-tabela-moldura">
-        ${r.tabela ? `<div class="demo-nome-tabela">${esc(r.tabela)}</div>` : ''}
+      <div class="demo-tabela-moldura${r.tabelaApagada ? ' tabela-apagada' : ''}">
+        ${r.tabela ? `<div class="demo-nome-tabela">${esc(r.tabela)}${r.tabelaApagada ? ' <em>apagada</em>' : ''}</div>` : ''}
         <div class="demo-rolagem"><table class="demo-tabela"><thead><tr>${cabecalho}</tr></thead><tbody>${corpo}</tbody></table></div>
       </div>
       <p class="demo-legenda">${r.legenda}</p>
@@ -151,7 +179,7 @@ export function comandoDaPergunta(q) {
   if (q.tipo === 'montar') return q.pecas.join(' ').replace(/\( /g, '(').replace(/ \)/g, ')');
   if (q.tipo === 'escolha' && q.codigo) {
     const certa = q.alternativas[q.correta];
-    if (/^(CREATE|INSERT|SELECT|UPDATE)\b/i.test(certa)) return certa;
+    if (/^(CREATE|INSERT|SELECT|UPDATE|DELETE|DROP)\b/i.test(certa)) return certa;
   }
   return null;
 }

@@ -91,7 +91,7 @@ $('btn-como').addEventListener('click', () => { iniciarAudio(); som.clique(); $(
 $('btn-fechar-como').addEventListener('click', () => { som.clique(); $('tela-como').hidden = true; });
 
 // ───────────── Modo treino: escolha do tema ─────────────
-const ICONES_TEMA = { create: '🧱', insert: '➕', select: '🔍', where: '🎯', update: '✏️' };
+const ICONES_TEMA = { create: '🧱', insert: '➕', select: '🔍', where: '🎯', update: '✏️', delete: '🗑️' };
 $('lista-temas').innerHTML = TEMAS.map((t) => {
   const n = PERGUNTAS.filter((p) => p.tema === t.id).length;
   return `
@@ -123,12 +123,17 @@ function montarTreino(tema) {
 // ───────────── Partida ─────────────
 function montarPerguntas() {
   const lista = [];
+  // Divide o total entre os temas: com 15 perguntas e 6 temas, cada tema fica com 2 ou 3
+  const total = CONFIG.perguntasPorPartida;
+  const minimo = Math.floor(total / TEMAS.length);
+  const comUmaMais = new Set(embaralhar(TEMAS.map((t) => t.id)).slice(0, total % TEMAS.length));
   for (const tema of TEMAS) {
+    const quantas = minimo + (comUmaMais.has(tema.id) ? 1 : 0);
     const doTema = PERGUNTAS.filter((p) => p.tema === tema.id);
-    const porTipo = ['vf', 'escolha', 'montar'].map((tipo) => embaralhar(doTema.filter((p) => p.tipo === tipo)));
+    const porTipo = embaralhar(['vf', 'escolha', 'montar']).map((tipo) => embaralhar(doTema.filter((p) => p.tipo === tipo)));
     const escolhidas = [];
-    // Uma de cada tipo; se precisar de mais, continua alternando
-    for (let i = 0; escolhidas.length < CONFIG.perguntasPorTema; i++) {
+    // Tipos diferentes dentro do tema; se precisar de mais, continua alternando
+    for (let i = 0; escolhidas.length < quantas; i++) {
       const grupo = porTipo[i % 3];
       const p = grupo[Math.floor(i / 3)];
       if (p) escolhidas.push(p);
@@ -445,7 +450,8 @@ function finalizar(completou) {
 
   $('res-temas').innerHTML = TEMAS.map((t) => {
     const r = estado.resultados.filter((x) => x.tema === t.id);
-    const bolinhas = Array.from({ length: CONFIG.perguntasPorTema }, (_, i) => {
+    const doTema = estado.perguntas.filter((x) => x.tema === t.id).length;
+    const bolinhas = Array.from({ length: doTema }, (_, i) => {
       const c = r[i] ? (r[i].correto ? 'ok' : 'nao') : '';
       return `<i class="bolinha ${c}"></i>`;
     }).join('');

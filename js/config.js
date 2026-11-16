@@ -16,7 +16,9 @@ export const CONFIG = {
   turmas: ['7º ano Vespertino'],
 
   vidas: 5,
-  perguntasPorTema: 3, // 5 temas × 3 = 15 perguntas por partida
+  // Perguntas por partida, divididas entre os temas (com 6 temas: 2 ou 3 de cada).
+  // Atenção: o banco do ranking aceita no máximo 15 acertos (veja supabase/configurar.sql).
+  perguntasPorPartida: 15,
 
   // Tempo (segundos) para responder, por tipo de pergunta
   tempo: { vf: 20, escolha: 25, montar: 45 },
