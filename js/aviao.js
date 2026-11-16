@@ -1,14 +1,12 @@
 // Biplano de madeira em 3D, montado com formas simples (low-poly).
 // O nariz aponta para -Z (para frente, longe da câmera).
 import * as THREE from '../vendor/three.module.min.js';
+import { criarTexturas } from './texturas-aviao.js';
 
 const material = (cor, extra = {}) =>
   new THREE.MeshStandardMaterial({ color: cor, flatShading: true, roughness: 0.72, metalness: 0, ...extra });
 
 const CORES = {
-  madeira: 0xd8a05a,
-  madeiraEscura: 0xa96a33,
-  vermelho: 0xd5473b,
   metal: 0x5d6068,
   pneu: 0x34353b,
   pele: 0xf2c48d,
@@ -46,12 +44,18 @@ export function criarAviao() {
   const corpo = new THREE.Group(); // tudo que inclina junto
   aviao.add(corpo);
 
+  // Texturas desenhadas em código (a cor do material fica branca para não tingir a textura)
+  const tx = criarTexturas();
   const m = {
-    madeira: material(CORES.madeira),
-    madeiraEscura: material(CORES.madeiraEscura),
-    vermelho: material(CORES.vermelho),
+    tabuas: material(0xffffff, { ...tx.tabuas, bumpScale: 1.2, roughness: 0.62 }),
+    madeira: material(0xffffff, { ...tx.madeira, roughness: 0.65 }),
+    madeiraEscura: material(0xc48f5e, { ...tx.madeira, roughness: 0.6 }),
+    vermelho: material(0xffffff, { ...tx.tecido, bumpScale: 1.6, roughness: 0.86 }),
     metal: material(CORES.metal, { metalness: 0.45, roughness: 0.45 }),
-    pneu: material(CORES.pneu, { roughness: 0.9 }),
+    chapa: material(0xffffff, { ...tx.metal, bumpScale: 1.2, metalness: 0.5, roughness: 0.42 }),
+    motor: material(0xffffff, { ...tx.motor, metalness: 0.45, roughness: 0.5 }),
+    pneu: material(0xffffff, { ...tx.pneu, bumpScale: 1.5, roughness: 0.92 }),
+    pneuLiso: material(CORES.pneu, { roughness: 0.9 }),
     pele: material(CORES.pele),
     gorro: material(CORES.gorro),
     cachecol: material(CORES.cachecol),
@@ -61,7 +65,7 @@ export function criarAviao() {
   // Fuselagem: cilindro afinando para trás
   const fus = new THREE.CylinderGeometry(0.44, 0.17, 3.1, 10);
   fus.rotateX(-Math.PI / 2);
-  const fuselagem = new THREE.Mesh(fus, m.madeira);
+  const fuselagem = new THREE.Mesh(fus, m.tabuas);
   fuselagem.position.z = 0.15;
   corpo.add(fuselagem);
 
@@ -75,11 +79,11 @@ export function criarAviao() {
   }
 
   // Motor (capô cinza) + cone da hélice
-  const capo = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.47, 0.42, 16), m.metal);
+  const capo = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.47, 0.42, 16), [m.chapa, m.metal, m.metal]);
   capo.rotation.x = Math.PI / 2;
   capo.position.z = -1.55;
   corpo.add(capo);
-  const frente = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.36, 0.05, 16), m.escuro);
+  const frente = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.36, 0.05, 16), [m.escuro, m.motor, m.motor]);
   frente.rotation.x = Math.PI / 2;
   frente.position.z = -1.77;
   corpo.add(frente);
@@ -113,15 +117,6 @@ export function criarAviao() {
   const asaInf = new THREE.Mesh(placaArredondada(4.0, 0.92, 0.42, 0.07), m.vermelho);
   asaInf.position.set(0, -0.26, -0.45);
   corpo.add(asaInf);
-
-  // Nervuras das asas (linhas um pouco mais escuras)
-  const matNervura = material(0xb83a30);
-  for (let i = -4; i <= 4; i++) {
-    if (i === 0) continue;
-    const nerv = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.012, 0.92), matNervura);
-    nerv.position.set(i * 0.5, 0.77, -0.55);
-    corpo.add(nerv);
-  }
 
   // Hastes entre as asas
   for (const x of [-1.6, 1.6]) {
@@ -193,7 +188,7 @@ export function criarAviao() {
     perna.position.set(x * 0.8, -0.58, -0.95);
     perna.rotation.z = x > 0 ? 0.35 : -0.35;
     corpo.add(perna);
-    const roda = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.26, 0.13, 16), m.pneu);
+    const roda = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.26, 0.13, 16), [m.pneu, m.pneuLiso, m.pneuLiso]);
     roda.rotation.z = Math.PI / 2;
     roda.position.set(x * 1.05, -0.9, -0.95);
     corpo.add(roda);
