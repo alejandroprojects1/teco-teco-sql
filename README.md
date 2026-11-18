@@ -12,6 +12,7 @@ Feito para funcionar **principalmente no celular**, direto no navegador, sem ins
 - Você tem **5 vidas**: bater em um obstáculo ou errar uma pergunta tira 1 vida.
 - Responda **rápido** para ganhar bônus de tempo, e acerte **em sequência** para ativar o combo (3 seguidas = x2, 5 seguidas = x3).
 - Pegue as **estrelas** no caminho para ganhar pontos extras.
+- Fique de olho na rara **moeda dourada 2x**: ela aparece **uma única vez** por partida (logo depois de uma pergunta sorteada entre a 3ª e a 10ª). Quem pegar **dobra a pontuação** que tem naquele momento. Não aparece no modo treino.
 - A partir da **pergunta 5 começa a chover**, e a chuva aumenta a cada pergunta. Na **pergunta 10 vira tempestade**, com relâmpagos e trovões. (No modo treino não chove. Para ajustar ou desligar, veja `chuva` em `js/config.js`.)
 - Depois de cada resposta, o jogo **executa o comando SQL de verdade** e mostra a tabela: a linha nova do `INSERT`, as linhas filtradas pelo `WHERE`, o valor alterado pelo `UPDATE`.
 

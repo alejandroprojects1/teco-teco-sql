@@ -825,3 +825,16 @@ code {
 .tabela-apagada .demo-nome-tabela em { display: inline-block; text-decoration: none; font-style: normal; font-family: var(--fonte); font-weight: 600; margin-left: 6px; background: rgba(255, 255, 255, 0.25); padding: 0 6px; border-radius: 6px; }
 .tabela-apagada .demo-tabela th { background: #c9ccd2; color: #6d7480; text-decoration: line-through; }
 .tabela-apagada .demo-tabela td { color: #a0a6b0; text-decoration: line-through; background: #f6f6f7 !important; }
+
+/* Moeda dourada 2x */
+.aviso-moeda {
+  font-size: 30px;
+  background: linear-gradient(135deg, #ffd34d, #f5a300);
+  color: #5a3500;
+  box-shadow: 0 10px 34px rgba(245, 163, 0, 0.6), 0 0 0 4px rgba(255, 236, 160, 0.6);
+  white-space: nowrap;
+  animation-duration: 2s;
+  align-self: start;
+  margin-top: calc(24vh + var(--topo-seguro));
+}
+.chip-moeda { background: linear-gradient(135deg, #fff1b8, #ffd34d) !important; color: #6b4200; }

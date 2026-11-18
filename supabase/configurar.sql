@@ -12,12 +12,16 @@ create table if not exists public.pontuacoes (
   id          bigint generated always as identity primary key,
   nome        text        not null check (char_length(nome) between 2 and 20),
   turma       text        not null default '7º ano Vespertino' check (char_length(turma) <= 40),
-  pontos      integer     not null check (pontos between 0 and 10000),
+  pontos      integer     not null check (pontos between 0 and 10000000),
   acertos     integer     not null check (acertos between 0 and 15),
   maior_combo integer     not null default 0 check (maior_combo between 0 and 15),
   distancia   integer     not null default 0 check (distancia between 0 and 100000),
   criado_em   timestamptz not null default now()
 );
+-- Limite de pontos (10 milhões). Também atualiza bancos criados com o limite antigo.
+alter table public.pontuacoes drop constraint if exists pontuacoes_pontos_check;
+alter table public.pontuacoes add constraint pontuacoes_pontos_check check (pontos between 0 and 10000000);
+
 create index if not exists pontuacoes_pontos_idx on public.pontuacoes (pontos desc);
 create index if not exists pontuacoes_nome_idx on public.pontuacoes (lower(nome));
 

@@ -85,6 +85,11 @@ export const som = {
   },
   tique: () => tom(740, 0.09, { tipo: 'square', vol: 0.05 }),
   vai: () => tom(1175, 0.3, { tipo: 'triangle', vol: 0.14 }),
+  moedaSurge: () => [1568, 1976, 2349].forEach((f, i) => tom(f, 0.18, { vol: 0.07, atraso: i * 0.06 })),
+  moeda: () => {
+    [784, 988, 1175, 1568, 1976, 2349].forEach((f, i) => tom(f, 0.28, { tipo: 'triangle', vol: 0.16, atraso: i * 0.055 }));
+    [2637, 3136].forEach((f, i) => tom(f, 0.5, { vol: 0.06, atraso: 0.35 + i * 0.08 }));
+  },
   fim: () => [784, 659, 523, 392].forEach((f, i) => tom(f, 0.25, { tipo: 'triangle', vol: 0.14, atraso: i * 0.12 })),
   vitoria: () => [523, 659, 784, 1047, 1319].forEach((f, i) => tom(f, 0.3, { tipo: 'triangle', vol: 0.15, atraso: i * 0.09 })),
 };

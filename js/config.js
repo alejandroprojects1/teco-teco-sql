@@ -21,7 +21,7 @@ export const CONFIG = {
   perguntasPorPartida: 15,
 
   // Tempo (segundos) para responder, por tipo de pergunta
-  tempo: { vf: 20, escolha: 25, montar: 45 },
+  tempo: { vf: 10, escolha: 10, montar: 45 },
 
   // Modo treino: sem obstáculos, sem tempo e sem pontos
   treino: { intervaloPrimeira: 2.5, intervalo: 3 },
@@ -29,6 +29,11 @@ export const CONFIG = {
 
   // Música de aventura nas telas de menu (começa no primeiro toque na tela)
   musica: true,
+
+  // Moeda dourada 2x: aparece uma única vez por partida, logo depois de uma pergunta
+  // sorteada entre as indicadas. Quem pega dobra a pontuação que tem naquele momento.
+  // Não aparece no modo treino.
+  moeda: { ativa: true, depoisDaPergunta: [3, 10] },
 
   // Chuva: começa na pergunta 5 e vira tempestade (com relâmpagos) na 10.
   // Não chove no modo treino. Para desligar, use ativa: false.

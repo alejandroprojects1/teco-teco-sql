@@ -97,6 +97,9 @@ export class Mundo {
     this.xMax = 4;
     this.aoBater = null;
     this.aoPegarEstrela = null;
+    this.moeda = null;
+    this.aoPegarMoeda = null;
+    this.aoPerderMoeda = null;
 
     this.redimensionar();
   }
@@ -397,6 +400,78 @@ export class Mundo {
     }
   }
 
+  // ───────────── Moeda dourada 2x (rara: no máximo uma por partida) ─────────────
+  _criarMoeda() {
+    // Face com "2x" gravado, desenhada em canvas
+    const T = 256;
+    const c = document.createElement('canvas');
+    c.width = c.height = T;
+    const g = c.getContext('2d');
+    const fundo = g.createRadialGradient(T * 0.38, T * 0.35, T * 0.05, T / 2, T / 2, T * 0.52);
+    fundo.addColorStop(0, '#fff3b0');
+    fundo.addColorStop(0.45, '#ffcf3a');
+    fundo.addColorStop(1, '#d99100');
+    g.fillStyle = fundo;
+    g.fillRect(0, 0, T, T);
+    g.strokeStyle = '#b87400';
+    g.lineWidth = 10;
+    g.beginPath(); g.arc(T / 2, T / 2, T * 0.42, 0, Math.PI * 2); g.stroke();
+    g.strokeStyle = 'rgba(255, 244, 190, 0.9)';
+    g.lineWidth = 3;
+    g.beginPath(); g.arc(T / 2, T / 2, T * 0.37, 0, Math.PI * 2); g.stroke();
+    g.font = '800 118px "Fredoka", "Arial Rounded MT Bold", Arial, sans-serif';
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    g.fillStyle = 'rgba(255, 250, 220, 0.85)';
+    g.fillText('2x', T / 2 + 4, T / 2 + 10);
+    g.fillStyle = '#a86400';
+    g.fillText('2x', T / 2, T / 2 + 6);
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+
+    const borda = new THREE.MeshStandardMaterial({ color: 0xffbf1f, metalness: 0.7, roughness: 0.25, emissive: 0xb87400, emissiveIntensity: 0.6, fog: false });
+    const face = new THREE.MeshStandardMaterial({ map: tex, metalness: 0.45, roughness: 0.3, emissive: 0xffffff, emissiveIntensity: 0.55, emissiveMap: tex, fog: false });
+    const corpo = new THREE.Mesh(new THREE.CylinderGeometry(1.7, 1.7, 0.3, 40), [borda, face, face]);
+    corpo.rotation.x = Math.PI / 2; // de frente para o piloto
+
+    const grupo = new THREE.Group();
+    const giro = new THREE.Group();
+    giro.add(corpo);
+    grupo.add(giro);
+
+    // halo de brilho
+    const halo = new THREE.Mesh(
+      new THREE.RingGeometry(1.95, 3.1, 40),
+      new THREE.MeshBasicMaterial({ color: 0xffd34d, transparent: true, opacity: 0.45, depthWrite: false, side: THREE.DoubleSide, fog: false }),
+    );
+    grupo.add(halo);
+    const luz = new THREE.PointLight(0xffc533, 6, 12, 1.6);
+    grupo.add(luz);
+    return { grupo, giro, halo, luz };
+  }
+
+  /** Solta a moeda dourada lá no fundo, num ponto alcançável do corredor de voo. */
+  soltarMoeda() {
+    if (this.moeda) return;
+    const m = this._criarMoeda();
+    // nasce um pouco mais perto que os obstáculos, para dar tempo de alcançá-la
+    m.grupo.position.set(rnd(-this.xMax * 0.7, this.xMax * 0.7), rnd(Y_MIN + 1.2, Y_MAX - 1.2), NASCER_Z + 45);
+    // abre espaço: nada de obstáculo perto da moeda
+    this.obstaculos = this.obstaculos.filter((o) => {
+      if (o.obj.position.z < NASCER_Z + 85) { this._removerObstaculo(o); return false; }
+      return true;
+    });
+    this.proxObstaculo = Math.max(this.proxObstaculo, 1.4);
+    this.cena.add(m.grupo);
+    this.moeda = m;
+  }
+
+  _removerMoeda() {
+    if (!this.moeda) return;
+    this.cena.remove(this.moeda.grupo);
+    this.moeda = null;
+  }
+
   _removerObstaculo(o) {
     this.cena.remove(o.obj);
   }
@@ -431,6 +506,7 @@ export class Mundo {
   iniciarJogo(comObstaculos = true) {
     for (const o of this.obstaculos) this._removerObstaculo(o);
     for (const e of this.estrelas) this.cena.remove(e);
+    this._removerMoeda();
     this.obstaculos = [];
     this.estrelas = [];
     this.modo = 'jogo';
@@ -700,6 +776,26 @@ export class Mundo {
       } else if (e.position.z > this.camera.position.z + 5) {
         this.cena.remove(e);
         this.estrelas.splice(i, 1);
+      }
+    }
+
+    if (this.moeda) {
+      const m = this.moeda;
+      const mp = m.grupo.position;
+      mp.z += dz;
+      m.giro.rotation.y += dt * 4;
+      const pulso = 1 + Math.sin(this.relogio * 6) * 0.12;
+      m.halo.scale.setScalar(pulso);
+      m.halo.material.opacity = 0.4 + Math.sin(this.relogio * 6) * 0.15;
+      if (Math.random() < 0.35) this._explosao(mp.clone().add(new THREE.Vector3(rnd(-1.4, 1.4), rnd(-1.4, 1.4), 0)), this.mat.brilho, 1, 1.5, 0.1);
+      const d = Math.hypot(mp.x - p.x, (mp.y - p.y) * 1.2, mp.z - p.z);
+      if (!semColisao && d < 2.6) {
+        this._explosao(mp, this.mat.brilho, 26, 7, 0.22);
+        this._removerMoeda();
+        this.aoPegarMoeda?.();
+      } else if (mp.z > this.camera.position.z + 5) {
+        this._removerMoeda();
+        this.aoPerderMoeda?.();
       }
     }
   }

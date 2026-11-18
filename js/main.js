@@ -156,6 +156,10 @@ function novaPartida(modo = 'jogo', temaTreino = null) {
     maiorCombo: 0,
     acertos: 0,
     estrelas: 0,
+    // moeda dourada 2x: aparece uma única vez, depois de uma pergunta sorteada
+    moedaDepoisDa: treino || !CONFIG.moeda.ativa ? -1
+      : CONFIG.moeda.depoisDaPergunta[0] + Math.floor(Math.random() * (CONFIG.moeda.depoisDaPergunta[1] - CONFIG.moeda.depoisDaPergunta[0] + 1)),
+    bonusMoeda: 0,
     perguntas: treino ? montarTreino(temaTreino) : montarPerguntas(),
     respondidas: 0,
     resultados: [], // { tema, correto }
@@ -236,6 +240,13 @@ async function abrirPergunta() {
   motorLigado(true);
   await contagem();
   if (fase === 'contagem') fase = 'voo';
+  if (fase === 'voo' && estado.respondidas === estado.moedaDepoisDa) {
+    mundo.soltarMoeda();
+    // mais alguns segundos de voo neste trecho, para dar tempo de buscar a moeda
+    estado.tempoEntre = estado.proximaEm = Math.max(estado.proximaEm, CONFIG.intervaloPerguntas + 3);
+    som.moedaSurge();
+    aviso('✨ Moeda dourada à vista!', 'aviso-moeda');
+  }
 }
 
 // ───────────── Clima: chuva a partir da pergunta 5 ─────────────
@@ -297,6 +308,17 @@ mundo.aoBater = () => {
   }
 };
 
+mundo.aoPegarMoeda = () => {
+  if (fase !== 'voo' || estado.bonusMoeda) return;
+  estado.bonusMoeda = estado.pontos;
+  estado.pontos *= 2;
+  som.moeda();
+  vibrar([40, 30, 40, 30, 80]);
+  confete();
+  aviso('🪙 Pontuação x2!', 'aviso-moeda');
+  atualizarHUD();
+};
+
 mundo.aoPegarEstrela = () => {
   if (fase !== 'voo') return;
   som.estrela();
@@ -341,7 +363,7 @@ function aviso(texto, classe) {
   el.className = `aviso ${classe}`;
   el.textContent = texto;
   $('avisos').appendChild(el);
-  setTimeout(() => el.remove(), classe === 'aviso-clima' ? 2100 : 1200);
+  setTimeout(() => el.remove(), classe === 'aviso-clima' || classe === 'aviso-moeda' ? 2100 : 1200);
 }
 
 function confete() {
@@ -419,7 +441,7 @@ function finalizar(completou) {
   chuvaVolume(0);
   $('hud').hidden = true;
   const bonusDistancia = Math.floor(mundo.distancia / CONFIG.pontos.metrosPorPonto);
-  const pontosPerguntas = estado.pontos - estado.estrelas * CONFIG.pontos.estrela;
+  const pontosPerguntas = estado.pontos - estado.estrelas * CONFIG.pontos.estrela - estado.bonusMoeda;
   const total = estado.pontos + bonusDistancia;
   const nPerg = estado.perguntas.length;
 
@@ -446,6 +468,7 @@ function finalizar(completou) {
   $('res-detalhe').innerHTML = `
     <span>Perguntas <b>${pontosPerguntas}</b></span>
     <span>Estrelas <b>${estado.estrelas * CONFIG.pontos.estrela}</b></span>
+    ${estado.bonusMoeda ? `<span class="chip-moeda">🪙 Moeda 2x <b>+${estado.bonusMoeda}</b></span>` : ''}
     <span>Distância <b>${bonusDistancia}</b></span>`;
 
   $('res-temas').innerHTML = TEMAS.map((t) => {
@@ -466,7 +489,7 @@ function finalizar(completou) {
   salvarNoRanking({
     nome: jogador.nome,
     turma: jogador.turma,
-    pontos: Math.min(total, 10000),
+    pontos: Math.min(total, 10000000),
     acertos: Math.min(estado.acertos, 15),
     maior_combo: Math.min(estado.maiorCombo, 15),
     distancia: Math.min(Math.round(mundo.distancia), 100000),
